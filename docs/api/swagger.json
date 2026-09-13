@@ -1,0 +1,348 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Multi-Tenant ERP SaaS API",
+    "description": "Comprehensive API documentation for the Multi-Tenant ERP platform.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "TenantHeader": {
+        "in": "header",
+        "name": "x-organization-id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "The active organization ID for the request"
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Authentication required or token expired"
+      },
+      "ForbiddenError": {
+        "description": "Access denied (Missing tenant ID or insufficient permissions)"
+      }
+    }
+  },
+  "security": [
+    { "bearerAuth": [] }
+  ],
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register a new user and organization",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Registration successful" }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Log in to the platform",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login successful, returns JWT" }
+        }
+      }
+    },
+    "/api/v1/organizations/my": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "List all organizations the authenticated user belongs to",
+        "responses": {
+          "200": { "description": "List of user organizations" }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "tags": ["Users & Teams"],
+        "summary": "Get all members of the active organization",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "responses": {
+          "200": { "description": "List of organization members" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" }
+        }
+      }
+    },
+    "/api/v1/employees": {
+      "get": {
+        "tags": ["Human Resources"],
+        "summary": "List all employees",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "responses": {
+          "200": { "description": "List of employees" }
+        }
+      },
+      "post": {
+        "tags": ["Human Resources"],
+        "summary": "Add a new employee",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": { "type": "string" },
+                  "lastName": { "type": "string" },
+                  "email": { "type": "string" },
+                  "jobTitle": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Employee created" }
+        }
+      }
+    },
+    "/api/v1/inventory": {
+      "get": {
+        "tags": ["Inventory"],
+        "summary": "Get all products in inventory",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "responses": {
+          "200": { "description": "A list of products" }
+        }
+      },
+      "post": {
+        "tags": ["Inventory"],
+        "summary": "Create a new product",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "price": { "type": "number" },
+                  "stock": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Product created" }
+        }
+      }
+    },
+    "/api/v1/inventory/transfer": {
+      "post": {
+        "tags": ["Inventory"],
+        "summary": "Transfer stock between warehouses",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sourceWarehouseId": { "type": "string" },
+                  "destWarehouseId": { "type": "string" },
+                  "items": { 
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "productId": { "type": "string" },
+                        "quantity": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Stock transferred successfully" }
+        }
+      }
+    },
+    "/api/v1/purchasing/orders": {
+      "get": {
+        "tags": ["Purchasing"],
+        "summary": "List all purchase orders",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "responses": {
+          "200": { "description": "Purchase orders retrieved" }
+        }
+      },
+      "post": {
+        "tags": ["Purchasing"],
+        "summary": "Create a new purchase order",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "supplierId": { "type": "string" },
+                  "items": { "type": "array", "items": { "type": "object" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Purchase order created" }
+        }
+      }
+    },
+    "/api/v1/sales/orders": {
+      "get": {
+        "tags": ["Sales & CRM"],
+        "summary": "List all sales orders",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "responses": {
+          "200": { "description": "Sales orders retrieved" }
+        }
+      },
+      "post": {
+        "tags": ["Sales & CRM"],
+        "summary": "Create a new sales order",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customerId": { "type": "string" },
+                  "items": { "type": "array", "items": { "type": "object" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Sales order created" }
+        }
+      }
+    },
+    "/api/v1/sales/orders/{id}/fulfill": {
+      "post": {
+        "tags": ["Sales & CRM"],
+        "summary": "Fulfill a sales order, deduct stock, and generate an invoice",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantHeader" },
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Sales order fulfilled successfully" }
+        }
+      }
+    },
+    "/api/v1/expenses": {
+      "get": {
+        "tags": ["Expenses"],
+        "summary": "List all expenses",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "responses": {
+          "200": { "description": "Expenses retrieved" }
+        }
+      },
+      "post": {
+        "tags": ["Expenses"],
+        "summary": "Record a new expense",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "payee": { "type": "string" },
+                  "amount": { "type": "number" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Expense recorded" }
+        }
+      }
+    },
+    "/api/v1/reports/dashboard": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get aggregate KPIs for the tenant dashboard",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "responses": {
+          "200": { "description": "Dashboard summary retrieved" }
+        }
+      }
+    },
+    "/api/v1/audit": {
+      "get": {
+        "tags": ["Audit"],
+        "summary": "Retrieve system audit logs for the organization",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "responses": {
+          "200": { "description": "Audit logs retrieved" }
+        }
+      }
+    }
+  }
+}
