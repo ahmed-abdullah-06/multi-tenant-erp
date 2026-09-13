@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=/login.html">
+  <title>Enterprise Multi-Tenant ERP SaaS</title>
+</head>
+<body>
+  <script>
+    const session = localStorage.getItem("erp_session");
+    if (session) {
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed.token) {
+          window.location.href = "/dashboard.html";
+        } else {
+          window.location.href = "/login.html";
+        }
+      } catch (e) {
+        window.location.href = "/login.html";
+      }
+    } else {
+      window.location.href = "/login.html";
+    }
+  </script>
+</body>
+</html>
