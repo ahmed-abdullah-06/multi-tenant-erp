@@ -1,0 +1,6 @@
+{
+  "name": "multi-tenant-erp-server",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/server.js"
+}
