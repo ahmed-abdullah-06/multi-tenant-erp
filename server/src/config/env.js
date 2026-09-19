@@ -20,4 +20,4 @@ if (!env.JWT_EXPIRES_IN) {
     throw new Error('JWT_EXPIRES_IN environment variable is required');
 }
 
-module.exports = e;
+module.exports = env;
