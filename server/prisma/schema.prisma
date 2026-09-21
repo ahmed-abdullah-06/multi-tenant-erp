@@ -52,6 +52,8 @@ model Organization {
   apiKeys           ApiKey[]
   webhookEndpoints  WebhookEndpoint[]
   integrations      Integration[]
+  accounts          Account[]
+  journalEntries    JournalEntry[]
 
   @@index([status])
 }
@@ -880,4 +882,48 @@ model Integration {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, provider])
+}
+
+model Account {
+  id             String        @id @default(uuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  name           String
+  code           String        // e.g., "1000" for Cash
+  type           AccountType   // Enum: ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  balance        Decimal       @default(0.00) @db.Decimal(19, 4)
+  lines          JournalLine[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([organizationId, code])
+}
+
+model JournalEntry {
+  id             String        @id @default(uuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  date           DateTime      @default(now())
+  description    String
+  reference      String?       // e.g., "INV-1024"
+  lines          JournalLine[]
+  createdAt      DateTime      @default(now())
+}
+
+model JournalLine {
+  id             String       @id @default(uuid())
+  journalEntryId String
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  accountId      String
+  account        Account      @relation(fields: [accountId], references: [id])
+  debit          Decimal      @default(0.00) @db.Decimal(19, 4)
+  credit         Decimal      @default(0.00) @db.Decimal(19, 4)
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
 }
