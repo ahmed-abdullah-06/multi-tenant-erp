@@ -16,6 +16,7 @@ router.use(resolveTenant);
 router.post(
     '/', 
     requirePermission('inventory:write'), 
+    requirePlanFeature('MAX_PRODUCTS'), // <-- Plan Enforcement Guard
     inventoryValidator.createProduct,
     inventoryController.createProduct
 );
