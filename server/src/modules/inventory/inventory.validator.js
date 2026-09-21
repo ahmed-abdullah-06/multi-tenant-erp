@@ -44,5 +44,22 @@ const transferStock = (req, res, next) => {
     next();
 };
 
-// Don't forget to export it!
-module.exports = { adjustStock, createProduct, transferStock };
+const adjustStockSafely = (req, res, next) => {
+    const { currentVersion, quantityChange } = req.body;
+    
+    if (typeof currentVersion !== 'number' || !Number.isInteger(currentVersion) || currentVersion < 1) {
+        return res.status(400).json({ error: 'currentVersion must be a positive integer' });
+    }
+    if (typeof quantityChange !== 'number' || !Number.isInteger(quantityChange) || quantityChange === 0) {
+        return res.status(400).json({ error: 'quantityChange must be a non-zero integer' });
+    }
+    
+    next();
+};
+
+module.exports = { 
+    adjustStock, 
+    createProduct, 
+    transferStock, 
+    adjustStockSafely // <-- Add to exports
+};

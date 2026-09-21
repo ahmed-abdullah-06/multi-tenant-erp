@@ -76,12 +76,33 @@ const transferStock = async (req, res, next) => {
     }
 };
 
-// Add to your module.exports at the bottom
+const adjustStockSafely = async (req, res, next) => {
+    try {
+        const { currentVersion, quantityChange } = req.body;
+        const balanceId = req.params.balanceId;
+
+        await inventoryService.adjustStockSafely(
+            req.tenantId, 
+            balanceId, 
+            currentVersion, 
+            quantityChange
+        );
+
+        return successResponse(res, 200, 'Stock safely adjusted');
+    } catch (error) {
+        if (error.message.includes('Conflict')) {
+            return res.status(409).json({ error: error.message }); // 409 Conflict is the standard for optimistic locking
+        }
+        next(error);
+    }
+};
+
 module.exports = {
     createProduct,
     getProducts,
     getProductById,
     adjustStock,
     deleteProduct,
-    transferStock // <-- Add this
+    transferStock,
+    adjustStockSafely // <-- Add to exports
 };

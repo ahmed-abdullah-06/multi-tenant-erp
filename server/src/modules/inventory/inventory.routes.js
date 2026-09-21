@@ -7,6 +7,7 @@ const inventoryValidator = require('./inventory.validator');
 const { requireAuth } = require('../../middleware/authMiddleware');
 const { resolveTenant } = require('../../middleware/tenantResolver');
 const { requirePermission } = require('../../middleware/rbacMiddleware');
+const { requirePlanFeature } = require('../../middleware/planGuard');
 
 // Apply base authentication and tenant resolution to all routes in this module
 router.use(requireAuth);
@@ -54,5 +55,13 @@ router.post(
     inventoryController.transferStock
 );
 
+
+// New Optimistic Locking Route
+router.patch(
+    '/balances/:balanceId/stock-safe', 
+    requirePermission('inventory:write'), 
+    inventoryValidator.adjustStockSafely,
+    inventoryController.adjustStockSafely
+);
 
 module.exports = router;
