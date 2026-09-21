@@ -1,3 +1,4 @@
+const stripeService = require('./stripe.service');
 const billingService = require('./billing.service');
 const { successResponse } = require('../../lib/response');
 
@@ -30,8 +31,31 @@ const updateSubscription = async (req, res, next) => {
     }
 };
 
+const createSubscriptionCheckout = async (req, res, next) => {
+    try {
+        const { planId, successUrl, cancelUrl } = req.body;
+        const organizationId = req.organizationId; // Provided by your auth middleware
+
+        if (!planId || !successUrl || !cancelUrl) {
+            return res.status(400).json({ error: 'Missing required checkout parameters' });
+        }
+
+        const checkoutUrl = await stripeService.createCheckoutSession(
+            organizationId, 
+            planId, 
+            successUrl, 
+            cancelUrl
+        );
+
+        return successResponse(res, 200, 'Checkout session created', { url: checkoutUrl });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getPlans,
     getSubscription,
-    updateSubscription
+    updateSubscription,
+    createSubscriptionCheckout
 };

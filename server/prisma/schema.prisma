@@ -12,71 +12,71 @@ datasource db {
 // -----------------------------------------------------------------------------
 
 model Organization {
-  id              String         @id @default(uuid())
-  name            String
-  slug            String         @unique
-  status          String         @default("ACTIVE") // ACTIVE, SUSPENDED, DELETED
-  planId          String?
-  
+  id     String  @id @default(uuid())
+  name   String
+  slug   String  @unique
+  status String  @default("ACTIVE") // ACTIVE, SUSPENDED, DELETED
+  planId String?
+
   // Market-Ready Settings
-  timezone        String         @default("UTC")
-  currency        String         @default("USD")
-  fiscalYearStart Int            @default(1) // Month 1-12
+  timezone        String  @default("UTC")
+  currency        String  @default("USD")
+  fiscalYearStart Int     @default(1) // Month 1-12
   logoUrl         String?
 
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  deletedAt       DateTime?      // Soft delete for the entire tenant
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete for the entire tenant
 
   // Relations
-  memberships        Membership[]
-  roles              Role[]
-  invitations        Invitation[]
-  departments        Department[]
-  employees          Employee[]
-  products           Product[]
-  categories         Category[]
-  warehouses         Warehouse[]
-  inventoryBalances  InventoryBalance[]
-  stockMovements     StockMovement[]
-  stockTransfers     StockTransfer[]
-  suppliers          Supplier[]
-  purchaseOrders     PurchaseOrder[]
-  goodsReceipts      GoodsReceipt[]
-  customers          Customer[]
-  quotes             Quote[]
-  salesOrders        SalesOrder[]
-  invoices           Invoice[]
-  payments           Payment[]
-  expenseCategories  ExpenseCategory[]
-  expenses           Expense[]
-  approvals          Approval[]
-  notifications      Notification[]
-  auditLogs          AuditLog[]
-  attachments        Attachment[]
-  subscription       Subscription?
-  usageRecords       UsageRecord[]
-  featureLimits      FeatureLimit[]
-  apiKeys            ApiKey[]
-  webhookEndpoints   WebhookEndpoint[]
-  integrations       Integration[]
-  accounts           Account[]
-  journalEntries     JournalEntry[]
-  activeUsers        User[]            @relation("UserActiveOrg")
+  memberships       Membership[]
+  roles             Role[]
+  invitations       Invitation[]
+  departments       Department[]
+  employees         Employee[]
+  products          Product[]
+  categories        Category[]
+  warehouses        Warehouse[]
+  inventoryBalances InventoryBalance[]
+  stockMovements    StockMovement[]
+  stockTransfers    StockTransfer[]
+  suppliers         Supplier[]
+  purchaseOrders    PurchaseOrder[]
+  goodsReceipts     GoodsReceipt[]
+  customers         Customer[]
+  quotes            Quote[]
+  salesOrders       SalesOrder[]
+  invoices          Invoice[]
+  payments          Payment[]
+  expenseCategories ExpenseCategory[]
+  expenses          Expense[]
+  approvals         Approval[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  attachments       Attachment[]
+  subscription      Subscription?
+  usageRecords      UsageRecord[]
+  featureLimits     FeatureLimit[]
+  apiKeys           ApiKey[]
+  webhookEndpoints  WebhookEndpoint[]
+  integrations      Integration[]
+  accounts          Account[]
+  journalEntries    JournalEntry[]
+  activeUsers       User[]             @relation("UserActiveOrg")
 
   @@index([status])
 }
 
 model User {
-  id                  String   @id @default(uuid())
-  name                String
-  email               String   @unique
-  passwordHash        String
-  status              String   @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
-  avatarUrl           String?
-  activeOrgId         String?  // Tracks the user's currently active workspace
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  status       String   @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  avatarUrl    String?
+  activeOrgId  String? // Tracks the user's currently active workspace
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   activeOrganization      Organization?            @relation("UserActiveOrg", fields: [activeOrgId], references: [id], onDelete: SetNull)
@@ -118,7 +118,7 @@ model Role {
   id             String   @id @default(uuid())
   name           String
   description    String?
-  organizationId String?  // Nullable for system predefined template roles
+  organizationId String? // Nullable for system predefined template roles
   isSystem       Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -136,7 +136,7 @@ model Role {
 model Permission {
   id          String   @id @default(uuid())
   action      String   @unique // e.g. "inventory:read", "inventory:write", "sales:read"
-  module      String   // e.g. "inventory", "purchasing", "sales"
+  module      String // e.g. "inventory", "purchasing", "sales"
   description String?
   createdAt   DateTime @default(now())
 
@@ -159,16 +159,16 @@ model RolePermission {
 }
 
 model Invitation {
-  id             String    @id @default(uuid())
+  id             String   @id @default(uuid())
   email          String
   organizationId String
   roleId         String
   invitedById    String
-  token          String    @unique
-  status         String    @default("PENDING") // PENDING, ACCEPTED, EXPIRED, REVOKED
+  token          String   @unique
+  status         String   @default("PENDING") // PENDING, ACCEPTED, EXPIRED, REVOKED
   expiresAt      DateTime
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -287,19 +287,19 @@ model Category {
 }
 
 model Product {
-  id                 String   @id @default(uuid())
-  organizationId     String
-  categoryId         String?
-  sku                String?
-  name               String
-  description        String?
-  price              Float    @default(0.0)
-  cost               Float    @default(0.0)
-  stock              Int      @default(0)
-  minStockLevel      Int      @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  deletedAt          DateTime? // Soft delete marker
+  id             String    @id @default(uuid())
+  organizationId String
+  categoryId     String?
+  sku            String?
+  name           String
+  description    String?
+  price          Float     @default(0.0)
+  cost           Float     @default(0.0)
+  stock          Int       @default(0)
+  minStockLevel  Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime? // Soft delete marker
 
   // Relations
   organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -317,14 +317,14 @@ model Product {
 }
 
 model Warehouse {
-  id                String   @id @default(uuid())
-  organizationId    String
-  name              String
-  code              String?
-  address           String?
-  status            String   @default("ACTIVE")
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  code           String?
+  address        String?
+  status         String   @default("ACTIVE")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -361,9 +361,9 @@ model StockMovement {
   organizationId String
   productId      String
   warehouseId    String
-  type           String   // IN, OUT, ADJUSTMENT, TRANSFER, SALE, PURCHASE
+  type           String // IN, OUT, ADJUSTMENT, TRANSFER, SALE, PURCHASE
   quantity       Int
-  referenceType  String?  // PURCHASE_ORDER, SALES_ORDER, TRANSFER, MANUAL
+  referenceType  String? // PURCHASE_ORDER, SALES_ORDER, TRANSFER, MANUAL
   referenceId    String?
   notes          String?
   createdAt      DateTime @default(now())
@@ -379,16 +379,16 @@ model StockMovement {
 }
 
 model StockTransfer {
-  id                     String              @id @default(uuid())
+  id                     String    @id @default(uuid())
   organizationId         String
   sourceWarehouseId      String
   destinationWarehouseId String
-  status                 String              @default("PENDING") // PENDING, IN_TRANSIT, COMPLETED, CANCELLED
+  status                 String    @default("PENDING") // PENDING, IN_TRANSIT, COMPLETED, CANCELLED
   trackingNumber         String?
   notes                  String?
   transferredAt          DateTime?
-  createdAt              DateTime            @default(now())
-  updatedAt              DateTime            @updatedAt
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   // Relations
   organization         Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -402,7 +402,7 @@ model StockTransfer {
 }
 
 model StockTransferItem {
-  id              String   @id @default(uuid())
+  id              String @id @default(uuid())
   stockTransferId String
   productId       String
   quantity        Int
@@ -439,18 +439,18 @@ model Supplier {
 }
 
 model PurchaseOrder {
-  id             String              @id @default(uuid())
+  id             String    @id @default(uuid())
   organizationId String
   supplierId     String
   orderNumber    String
-  status         String              @default("DRAFT") // DRAFT, ISSUED, PARTIALLY_RECEIVED, RECEIVED, CANCELLED
-  totalAmount    Float               @default(0.0)
-  currency       String              @default("USD")
-  orderDate      DateTime            @default(now())
+  status         String    @default("DRAFT") // DRAFT, ISSUED, PARTIALLY_RECEIVED, RECEIVED, CANCELLED
+  totalAmount    Float     @default(0.0)
+  currency       String    @default("USD")
+  orderDate      DateTime  @default(now())
   expectedDate   DateTime?
   notes          String?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // Relations
   organization  Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -463,7 +463,7 @@ model PurchaseOrder {
 }
 
 model PurchaseOrderItem {
-  id              String        @id @default(uuid())
+  id              String @id @default(uuid())
   purchaseOrderId String
   productId       String
   quantity        Int
@@ -479,13 +479,13 @@ model PurchaseOrderItem {
 }
 
 model GoodsReceipt {
-  id              String        @id @default(uuid())
+  id              String   @id @default(uuid())
   organizationId  String
   purchaseOrderId String
   receiptNumber   String
-  receivedDate    DateTime      @default(now())
+  receivedDate    DateTime @default(now())
   notes           String?
-  createdAt       DateTime      @default(now())
+  createdAt       DateTime @default(now())
 
   // Relations
   organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -512,7 +512,7 @@ model Customer {
   updatedAt      DateTime @updatedAt
 
   // Relations
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   quotes       Quote[]
   salesOrders  SalesOrder[]
   invoices     Invoice[]
@@ -522,16 +522,16 @@ model Customer {
 }
 
 model Quote {
-  id             String      @id @default(uuid())
+  id             String    @id @default(uuid())
   organizationId String
   customerId     String
   quoteNumber    String
-  status         String      @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED, EXPIRED
-  totalAmount    Float       @default(0.0)
+  status         String    @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED, EXPIRED
+  totalAmount    Float     @default(0.0)
   validUntil     DateTime?
   notes          String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -543,7 +543,7 @@ model Quote {
 }
 
 model QuoteItem {
-  id         String   @id @default(uuid())
+  id         String @id @default(uuid())
   quoteId    String
   productId  String
   quantity   Int
@@ -559,17 +559,17 @@ model QuoteItem {
 }
 
 model SalesOrder {
-  id             String           @id @default(uuid())
+  id             String   @id @default(uuid())
   organizationId String
   customerId     String
   orderNumber    String
-  status         String           @default("PENDING") // PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
-  totalAmount    Float            @default(0.0)
-  currency       String           @default("USD")
-  orderDate      DateTime         @default(now())
+  status         String   @default("PENDING") // PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
+  totalAmount    Float    @default(0.0)
+  currency       String   @default("USD")
+  orderDate      DateTime @default(now())
   notes          String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -582,7 +582,7 @@ model SalesOrder {
 }
 
 model SalesOrderItem {
-  id           String     @id @default(uuid())
+  id           String @id @default(uuid())
   salesOrderId String
   productId    String
   quantity     Int
@@ -629,7 +629,7 @@ model Payment {
   invoiceId      String
   amount         Float
   currency       String   @default("USD")
-  paymentMethod  String   // CASH, BANK_TRANSFER, CREDIT_CARD, OTHER
+  paymentMethod  String // CASH, BANK_TRANSFER, CREDIT_CARD, OTHER
   reference      String?
   status         String   @default("COMPLETED") // COMPLETED, PENDING, FAILED, REFUNDED
   paidAt         DateTime @default(now())
@@ -664,18 +664,18 @@ model ExpenseCategory {
 }
 
 model Expense {
-  id             String    @id @default(uuid())
+  id             String   @id @default(uuid())
   organizationId String
   categoryId     String?
   amount         Float
-  currency       String    @default("USD")
-  expenseDate    DateTime  @default(now())
+  currency       String   @default("USD")
+  expenseDate    DateTime @default(now())
   payee          String?
   description    String?
-  status         String    @default("PENDING") // PENDING, APPROVED, REJECTED, PAID
+  status         String   @default("PENDING") // PENDING, APPROVED, REJECTED, PAID
   receiptUrl     String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -692,7 +692,7 @@ model Expense {
 model Approval {
   id             String    @id @default(uuid())
   organizationId String
-  entityType     String    // PURCHASE_ORDER, EXPENSE, SALES_ORDER
+  entityType     String // PURCHASE_ORDER, EXPENSE, SALES_ORDER
   entityId       String
   requesterId    String
   reviewerId     String?
@@ -734,8 +734,8 @@ model AuditLog {
   id             String   @id @default(uuid())
   organizationId String
   userId         String?
-  action         String   // CREATE, UPDATE, DELETE, LOGIN, APPROVE, REJECT
-  entityType     String   // PRODUCT, ORDER, INVOICE, USER, MEMBERSHIP, etc.
+  action         String // CREATE, UPDATE, DELETE, LOGIN, APPROVE, REJECT
+  entityType     String // PRODUCT, ORDER, INVOICE, USER, MEMBERSHIP, etc.
   entityId       String?
   details        Json?
   ipAddress      String?
@@ -754,7 +754,7 @@ model AuditLog {
 model Attachment {
   id             String   @id @default(uuid())
   organizationId String
-  entityType     String   // INVOICE, EXPENSE, PRODUCT, etc.
+  entityType     String // INVOICE, EXPENSE, PRODUCT, etc.
   entityId       String
   fileName       String
   fileSize       Int
@@ -786,15 +786,15 @@ model Plan {
 }
 
 model Subscription {
-  id                 String    @id @default(uuid())
-  organizationId     String    @unique
+  id                 String   @id @default(uuid())
+  organizationId     String   @unique
   planId             String
-  status             String    @default("ACTIVE") // ACTIVE, TRIALING, PAST_DUE, CANCELED
-  currentPeriodStart DateTime  @default(now())
+  status             String   @default("ACTIVE") // ACTIVE, TRIALING, PAST_DUE, CANCELED
+  currentPeriodStart DateTime @default(now())
   currentPeriodEnd   DateTime
-  cancelAtPeriodEnd  Boolean   @default(false)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  cancelAtPeriodEnd  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -806,7 +806,7 @@ model Subscription {
 model UsageRecord {
   id             String   @id @default(uuid())
   organizationId String
-  metric         String   // USERS_COUNT, INVOICES_COUNT, STORAGE_BYTES, API_CALLS
+  metric         String // USERS_COUNT, INVOICES_COUNT, STORAGE_BYTES, API_CALLS
   quantity       Int      @default(0)
   recordedAt     DateTime @default(now())
 
@@ -819,7 +819,7 @@ model UsageRecord {
 model FeatureLimit {
   id             String   @id @default(uuid())
   organizationId String
-  featureKey     String   // MAX_USERS, MAX_PRODUCTS, CUSTOM_REPORTS, WEBHOOKS
+  featureKey     String // MAX_USERS, MAX_PRODUCTS, CUSTOM_REPORTS, WEBHOOKS
   limitValue     Int      @default(0) // -1 for unlimited
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -849,14 +849,14 @@ model ApiKey {
 }
 
 model WebhookEndpoint {
-  id             String            @id @default(uuid())
+  id             String   @id @default(uuid())
   organizationId String
   url            String
   secret         String
-  events         Json              // e.g. ["invoice.created", "stock.low"]
-  isActive       Boolean           @default(true)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  events         Json // e.g. ["invoice.created", "stock.low"]
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -866,15 +866,15 @@ model WebhookEndpoint {
 }
 
 model WebhookDelivery {
-  id                String          @id @default(uuid())
+  id                String   @id @default(uuid())
   webhookEndpointId String
   event             String
   payload           Json
   statusCode        Int?
   responseBody      String?
-  attempts          Int             @default(1)
-  success           Boolean         @default(false)
-  createdAt         DateTime        @default(now())
+  attempts          Int      @default(1)
+  success           Boolean  @default(false)
+  createdAt         DateTime @default(now())
 
   // Relations
   webhookEndpoint WebhookEndpoint @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
@@ -885,7 +885,7 @@ model WebhookDelivery {
 model Integration {
   id             String   @id @default(uuid())
   organizationId String
-  provider       String   // STRIPE, SLACK, QUICKBOOKS, SENDGRID
+  provider       String // STRIPE, SLACK, QUICKBOOKS, SENDGRID
   config         Json
   status         String   @default("ACTIVE") // ACTIVE, ERROR, DISCONNECTED
   createdAt      DateTime @default(now())
@@ -902,8 +902,8 @@ model Account {
   organizationId String
   organization   Organization  @relation(fields: [organizationId], references: [id])
   name           String
-  code           String        // e.g., "1000" for Cash
-  type           AccountType   // Enum: ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  code           String // e.g., "1000" for Cash
+  type           AccountType // Enum: ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
   balance        Decimal       @default(0.00) @db.Decimal(19, 4)
   lines          JournalLine[]
   createdAt      DateTime      @default(now())
@@ -918,7 +918,7 @@ model JournalEntry {
   organization   Organization  @relation(fields: [organizationId], references: [id])
   date           DateTime      @default(now())
   description    String
-  reference      String?       // e.g., "INV-1024"
+  reference      String? // e.g., "INV-1024"
   lines          JournalLine[]
   createdAt      DateTime      @default(now())
 }

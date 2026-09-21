@@ -14,6 +14,16 @@ app.use(helmet({
     contentSecurityPolicy: false // Allow inline scripts and client assets for development
 }));
 app.use(cors());
+
+// ==========================================
+// STRIPE WEBHOOK MIDDLEWARE
+// ==========================================
+// CRITICAL: The Stripe webhook MUST receive the raw unparsed request body 
+// to verify the cryptographic signature. We apply express.raw() exclusively 
+// to this route BEFORE the global express.json() parser consumes the stream.
+app.use('/api/v1/billing/webhook', express.raw({ type: 'application/json' }));
+
+// Global body parsers for all other routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
