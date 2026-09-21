@@ -142,11 +142,37 @@ const transferStock = async (tenantId, sourceWarehouseId, destWarehouseId, items
     });
 };
 
+// ... existing imports and functions (createProduct, getProducts, transferStock, etc.)
+
+const adjustStockSafely = async (tenantId, balanceId, currentVersion, quantityChange) => {
+    // Attempt to update ONLY if the version matches what the client originally read
+    const result = await prisma.inventoryBalance.updateMany({
+        where: { 
+            id: balanceId, 
+            organizationId: tenantId,
+            version: currentVersion // <-- The Optimistic Lock Check
+        },
+        data: { 
+            quantity: { increment: quantityChange },
+            version: { increment: 1 } // <-- Increment the version for the next edit
+        }
+    });
+
+    if (result.count === 0) {
+        // The count is 0 because the version changed between read and write.
+        throw new Error('Conflict: The record was modified by another user. Please refresh and try again.');
+    }
+
+    return true;
+};
+
+// Don't forget to add it to your exports at the bottom!
 module.exports = { 
     createProduct,
     getProducts,
     getProductById,
     adjustStock,
     deleteProduct,
-    transferStock 
+    transferStock,
+    adjustStockSafely // <-- Added here
 };

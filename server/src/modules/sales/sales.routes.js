@@ -30,6 +30,6 @@ router.patch('/orders/:id/cancel', requirePermission('sales:write'), salesContro
 // Invoices & Payments
 router.get('/invoices', requirePermission('sales:read'), salesController.getInvoices);
 router.get('/invoices/:id', requirePermission('sales:read'), salesController.getInvoiceById);
-router.post('/invoices/:id/payments', requirePermission('sales:write'), salesValidator.recordPayment, salesController.recordPayment);
+router.post('/invoices/:id/payments', requirePermission('sales:write'), salesValidator.recordPayment, salesController.recordPayment,requireIdempotency);
 
 module.exports = router;

@@ -940,3 +940,17 @@ enum AccountType {
   REVENUE
   EXPENSE
 }
+
+model InventoryBalance {
+  id             String   @id @default(uuid())
+  organizationId String
+  productId      String
+  warehouseId    String
+  quantity       Int      @default(0)
+  reserved       Int      @default(0)
+  version        Int      @default(1)  // <-- ADDED FOR OPTIMISTIC LOCKING
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // ... relations
+}
