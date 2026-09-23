@@ -1,12 +1,23 @@
-const logger = {
-    info: (msg, ...args) => console.log(`[INFO] ${new Date().toISOString()}: ${msg}`, ...args),
-    warn: (msg, ...args) => console.warn(`[WARN] ${new Date().toISOString()}: ${msg}`, ...args),
-    error: (msg, ...args) => console.error(`[ERROR] ${new Date().toISOString()}: ${msg}`, ...args),
-    debug: (msg, ...args) => {
-        if (process.env.NODE_ENV === 'development') {
-            console.log(`[DEBUG] ${new Date().toISOString()}: ${msg}`, ...args);
-        }
-    }
-};
+const winston = require('winston');
+
+const logger = winston.createLogger({
+    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.errors({ stack: true }), // Automatically captures error stack traces
+        winston.format.json()                   // Outputs structured JSON
+    ),
+    defaultMeta: { service: 'erp-api' },
+    transports: [
+        new winston.transports.Console({
+            format: process.env.NODE_ENV === 'production'
+                ? winston.format.json()
+                : winston.format.combine(
+                    winston.format.colorize(),
+                    winston.format.simple()
+                )
+        })
+    ]
+});
 
 module.exports = logger;

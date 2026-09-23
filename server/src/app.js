@@ -7,8 +7,23 @@ const apiRoutes = require('./routes/index');
 const { errorHandler } = require('./middleware/errorHandler');
 const swaggerUi = require('swagger-ui-express');
 const { apiLimiter } = require('./middleware/rateLimiter'); // <-- Import the general API limiter
+const { attachCorrelationId } = require('./middleware/correlationId');
 
 const app = express();
+
+app.use(helmet({ /* existing config */ }));
+app.use(cors(corsOptions));
+
+// ==========================================
+// OBSERVABILITY & TRACING
+// ==========================================
+// Apply correlation IDs before any body parsers or routes are hit
+app.use(attachCorrelationId);
+
+// ==========================================
+// STRIPE WEBHOOK MIDDLEWARE
+// ==========================================
+app.use('/api/v1/billing/webhook', express.raw({ type: 'application/json' }));
 
 // ==========================================
 // SECURITY HARDENING
