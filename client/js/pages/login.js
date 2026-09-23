@@ -71,8 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify({ name, email, password })
         });
 
-        if (res.data && res.data.token) {
-          setToken(res.data.token);
+        if (res.data && res.data.accessToken) {
+          setToken(res.data.accessToken);
           if (res.data.organization) {
             setOrganizationId(res.data.organization.id);
           }
@@ -80,6 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => {
             window.location.href = "/dashboard.html";
           }, 800);
+        } else {
+          throw new Error("Invalid response from server");
         }
       } else {
         const res = await apiClient("/auth/login", {
@@ -87,8 +89,8 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify({ email, password })
         });
 
-        if (res.data && res.data.token) {
-          setToken(res.data.token);
+        if (res.data && res.data.accessToken) {
+          setToken(res.data.accessToken);
           if (res.data.defaultOrganizationId) {
             setOrganizationId(res.data.defaultOrganizationId);
           }
@@ -96,6 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => {
             window.location.href = "/dashboard.html";
           }, 600);
+        } else {
+          throw new Error("Invalid response from server");
         }
       }
     } catch (err) {

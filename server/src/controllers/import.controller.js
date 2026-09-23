@@ -1,12 +1,12 @@
 // server/controllers/import.controller.js
-import { PrismaClient } from '@prisma/client';
-import { parse } from 'csv-parse';
-import fs from 'fs';
+const { PrismaClient } = require('@prisma/client');
+const { parse } = require('csv-parse');
+const fs = require('fs');
 
 const prisma = new PrismaClient();
 
 // Note: Ensure a multer middleware like upload.single('file') runs before this
-export const importInventoryCsv = (req, res) => {
+const importInventoryCsv = (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No CSV file uploaded' });
 
   const records = [];
@@ -40,3 +40,5 @@ export const importInventoryCsv = (req, res) => {
       }
     });
 };
+
+module.exports = { importInventoryCsv };

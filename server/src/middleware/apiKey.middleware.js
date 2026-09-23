@@ -1,9 +1,9 @@
-import crypto from 'crypto';
-import { PrismaClient } from '@prisma/client';
+const crypto = require('crypto');
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-export const requireApiKey = async (req, res, next) => {
+const requireApiKey = async (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
 
   if (!apiKey) {
@@ -29,3 +29,5 @@ export const requireApiKey = async (req, res, next) => {
     res.status(500).json({ error: 'Internal server error during key validation' });
   }
 };
+
+module.exports = { requireApiKey };

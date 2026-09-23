@@ -23,8 +23,12 @@
   "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "axios": "^1.20.0",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^6.3.8",
     "cors": "^2.8.6",
+    "csv-parse": "^7.0.2",
+    "csv-stringify": "^6.8.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",

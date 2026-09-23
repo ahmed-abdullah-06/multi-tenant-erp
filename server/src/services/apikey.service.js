@@ -1,9 +1,9 @@
-import crypto from 'crypto';
-import { PrismaClient } from '@prisma/client';
+const crypto = require('crypto');
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-export const generateApiKey = async (organizationId, name) => {
+const generateApiKey = async (organizationId, name) => {
   // Generate a secure 64-character random string with a prefix
   const rawKey = crypto.randomBytes(32).toString('hex');
   const fullKey = `erp_${rawKey}`;
@@ -24,3 +24,5 @@ export const generateApiKey = async (organizationId, name) => {
   // Return the raw key to the user one time only
   return fullKey;
 };
+
+module.exports = { generateApiKey };

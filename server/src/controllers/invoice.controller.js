@@ -1,9 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import { generateInvoicePdf } from '../services/pdf.service.js';
+const { PrismaClient } = require('@prisma/client');
+const { generateInvoicePdf } = require('../services/pdf.service');
 
 const prisma = new PrismaClient();
 
-export const downloadInvoice = async (req, res) => {
+const downloadInvoice = async (req, res) => {
   try {
     const invoiceId = req.params.id;
 
@@ -30,3 +30,5 @@ export const downloadInvoice = async (req, res) => {
     res.status(500).json({ error: 'Failed to generate PDF document' });
   }
 };
+
+module.exports = { downloadInvoice };

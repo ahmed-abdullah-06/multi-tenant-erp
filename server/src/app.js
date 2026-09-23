@@ -29,7 +29,13 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static frontend assets
 const clientPath = path.join(__dirname, '../../client');
-app.use(express.static(clientPath));
+app.use(express.static(clientPath, {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
+}));
 
 // ==========================================
 // SWAGGER API DOCUMENTATION

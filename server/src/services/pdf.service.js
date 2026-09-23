@@ -1,6 +1,6 @@
-import PDFDocument from 'pdfkit';
+const PDFDocument = require('pdfkit');
 
-export const generateInvoicePdf = (invoiceData) => {
+const generateInvoicePdf = (invoiceData) => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50 });
     const buffers = [];
@@ -35,3 +35,5 @@ export const generateInvoicePdf = (invoiceData) => {
     doc.end();
   });
 };
+
+module.exports = { generateInvoicePdf };

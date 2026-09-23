@@ -1,10 +1,10 @@
 // server/controllers/export.controller.js
-import { PrismaClient } from '@prisma/client';
-import { stringify } from 'csv-stringify/sync';
+const { PrismaClient } = require('@prisma/client');
+const { stringify } = require('csv-stringify/sync');
 
 const prisma = new PrismaClient();
 
-export const exportInventoryCsv = async (req, res) => {
+const exportInventoryCsv = async (req, res) => {
   try {
     // Fetch tenant-isolated data
     const inventory = await prisma.product.findMany({
@@ -24,3 +24,5 @@ export const exportInventoryCsv = async (req, res) => {
     res.status(500).json({ error: 'Export failed' });
   }
 };
+
+module.exports = { exportInventoryCsv };
