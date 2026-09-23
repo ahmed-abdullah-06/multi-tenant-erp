@@ -1,0 +1,68 @@
+name: ERP CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    # Spin up isolated service containers for the integration tests
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: erp_test_user
+          POSTGRES_PASSWORD: erp_test_password
+          POSTGRES_DB: erp_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # Define environment variables strictly for the CI runner
+    env:
+      DATABASE_URL: postgresql://erp_test_user:erp_test_password@localhost:5432/erp_test_db
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci_test_jwt_secret_key_2026
+      JWT_EXPIRES_IN: 15m
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Push Database Schema
+        run: npx prisma db push --accept-data-loss
+
+      - name: Run Test Suite with Coverage
+        run: npm run test:coverage

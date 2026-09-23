@@ -1,14 +1,18 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Multi-Tenant ERP SaaS API",
-    "description": "Comprehensive API documentation for the Multi-Tenant ERP platform.",
-    "version": "1.0.0"
+    "title": "Enterprise Multi-Tenant ERP SaaS API",
+    "description": "Comprehensive API documentation for the Multi-Tenant ERP platform, including core ledger accounting, inventory management, and SaaS billing.",
+    "version": "2.0.0"
   },
   "servers": [
     {
       "url": "http://localhost:5000",
       "description": "Local Development Server"
+    },
+    {
+      "url": "https://api.yourdomain.com",
+      "description": "Production Server"
     }
   ],
   "components": {
@@ -16,7 +20,14 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT"
+        "bearerFormat": "JWT",
+        "description": "Short-lived access token obtained via /auth/login"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Permanent API key for third-party integrations"
       }
     },
     "parameters": {
@@ -24,30 +35,31 @@
         "in": "header",
         "name": "x-organization-id",
         "required": true,
-        "schema": {
-          "type": "string",
-          "format": "uuid"
-        },
+        "schema": { "type": "string", "format": "uuid" },
         "description": "The active organization ID for the request"
+      },
+      "IdempotencyKey": {
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": false,
+        "schema": { "type": "string" },
+        "description": "Unique key to prevent duplicate execution of mutating financial requests"
       }
     },
     "responses": {
-      "UnauthorizedError": {
-        "description": "Authentication required or token expired"
-      },
-      "ForbiddenError": {
-        "description": "Access denied (Missing tenant ID or insufficient permissions)"
-      }
+      "UnauthorizedError": { "description": "Authentication required or token expired" },
+      "ForbiddenError": { "description": "Access denied due to RBAC or SaaS plan limits" },
+      "ConflictError": { "description": "Optimistic locking failure; the resource was modified by another transaction" }
     }
   },
   "security": [
     { "bearerAuth": [] }
   ],
   "paths": {
-    "/api/v1/auth/register": {
+    "/api/v1/auth/refresh": {
       "post": {
         "tags": ["Authentication"],
-        "summary": "Register a new user and organization",
+        "summary": "Refresh expired access tokens",
         "security": [],
         "requestBody": {
           "required": true,
@@ -55,25 +67,24 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {
-                  "name": { "type": "string" },
-                  "email": { "type": "string" },
-                  "password": { "type": "string" }
-                }
+                "properties": { "refreshToken": { "type": "string" } }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Registration successful" }
+          "200": { "description": "Returns a new short-lived access token and a rotated refresh token" }
         }
       }
     },
-    "/api/v1/auth/login": {
-      "post": {
-        "tags": ["Authentication"],
-        "summary": "Log in to the platform",
-        "security": [],
+    "/api/v1/inventory/balances/{balanceId}/stock-safe": {
+      "patch": {
+        "tags": ["Inventory (Data Integrity)"],
+        "summary": "Adjust stock with optimistic locking to prevent concurrent overwrite",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantHeader" },
+          { "in": "path", "name": "balanceId", "required": true, "schema": { "type": "string" } }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -81,228 +92,81 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string" },
-                  "password": { "type": "string" }
+                  "currentVersion": { "type": "integer", "example": 3 },
+                  "quantityChange": { "type": "integer", "example": -5 }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Login successful, returns JWT" }
+          "200": { "description": "Stock adjusted successfully" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
         }
       }
     },
-    "/api/v1/organizations/my": {
+    "/api/v1/inventory/export": {
       "get": {
-        "tags": ["Organizations"],
-        "summary": "List all organizations the authenticated user belongs to",
-        "responses": {
-          "200": { "description": "List of user organizations" }
-        }
-      }
-    },
-    "/api/v1/users": {
-      "get": {
-        "tags": ["Users & Teams"],
-        "summary": "Get all members of the active organization",
+        "tags": ["Data I/O"],
+        "summary": "Export inventory records as a CSV file",
         "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
         "responses": {
-          "200": { "description": "List of organization members" },
-          "403": { "$ref": "#/components/responses/ForbiddenError" }
-        }
-      }
-    },
-    "/api/v1/employees": {
-      "get": {
-        "tags": ["Human Resources"],
-        "summary": "List all employees",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "responses": {
-          "200": { "description": "List of employees" }
-        }
-      },
-      "post": {
-        "tags": ["Human Resources"],
-        "summary": "Add a new employee",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "firstName": { "type": "string" },
-                  "lastName": { "type": "string" },
-                  "email": { "type": "string" },
-                  "jobTitle": { "type": "string" }
-                }
-              }
-            }
+          "200": { 
+            "description": "CSV File Stream",
+            "content": { "text/csv": { "schema": { "type": "string", "format": "binary" } } }
           }
-        },
-        "responses": {
-          "201": { "description": "Employee created" }
         }
       }
     },
-    "/api/v1/inventory": {
+    "/api/v1/sales/invoices/{id}/pdf": {
       "get": {
-        "tags": ["Inventory"],
-        "summary": "Get all products in inventory",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "responses": {
-          "200": { "description": "A list of products" }
-        }
-      },
-      "post": {
-        "tags": ["Inventory"],
-        "summary": "Create a new product",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": { "type": "string" },
-                  "price": { "type": "number" },
-                  "stock": { "type": "integer" }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": { "description": "Product created" }
-        }
-      }
-    },
-    "/api/v1/inventory/transfer": {
-      "post": {
-        "tags": ["Inventory"],
-        "summary": "Transfer stock between warehouses",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "sourceWarehouseId": { "type": "string" },
-                  "destWarehouseId": { "type": "string" },
-                  "items": { 
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "productId": { "type": "string" },
-                        "quantity": { "type": "integer" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": { "description": "Stock transferred successfully" }
-        }
-      }
-    },
-    "/api/v1/purchasing/orders": {
-      "get": {
-        "tags": ["Purchasing"],
-        "summary": "List all purchase orders",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "responses": {
-          "200": { "description": "Purchase orders retrieved" }
-        }
-      },
-      "post": {
-        "tags": ["Purchasing"],
-        "summary": "Create a new purchase order",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "supplierId": { "type": "string" },
-                  "items": { "type": "array", "items": { "type": "object" } }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": { "description": "Purchase order created" }
-        }
-      }
-    },
-    "/api/v1/sales/orders": {
-      "get": {
-        "tags": ["Sales & CRM"],
-        "summary": "List all sales orders",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "responses": {
-          "200": { "description": "Sales orders retrieved" }
-        }
-      },
-      "post": {
-        "tags": ["Sales & CRM"],
-        "summary": "Create a new sales order",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "customerId": { "type": "string" },
-                  "items": { "type": "array", "items": { "type": "object" } }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": { "description": "Sales order created" }
-        }
-      }
-    },
-    "/api/v1/sales/orders/{id}/fulfill": {
-      "post": {
-        "tags": ["Sales & CRM"],
-        "summary": "Fulfill a sales order, deduct stock, and generate an invoice",
+        "tags": ["Document Generation"],
+        "summary": "Download invoice as PDF",
         "parameters": [
           { "$ref": "#/components/parameters/TenantHeader" },
           { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
         ],
         "responses": {
-          "200": { "description": "Sales order fulfilled successfully" }
+          "200": {
+            "description": "PDF Document Stream",
+            "content": { "application/pdf": { "schema": { "type": "string", "format": "binary" } } }
+          }
         }
       }
     },
-    "/api/v1/expenses": {
-      "get": {
-        "tags": ["Expenses"],
-        "summary": "List all expenses",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "responses": {
-          "200": { "description": "Expenses retrieved" }
-        }
-      },
+    "/api/v1/sales/invoices/{id}/payments": {
       "post": {
-        "tags": ["Expenses"],
-        "summary": "Record a new expense",
+        "tags": ["Sales & CRM"],
+        "summary": "Record a payment with idempotency protection",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantHeader" },
+          { "$ref": "#/components/parameters/IdempotencyKey" },
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": { "type": "number" },
+                  "paymentMethod": { "type": "string" },
+                  "reference": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Payment recorded successfully" }
+        }
+      }
+    },
+    "/api/v1/billing/checkout": {
+      "post": {
+        "tags": ["SaaS Billing"],
+        "summary": "Generate a Stripe checkout session URL for plan subscription",
         "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
         "requestBody": {
           "required": true,
@@ -311,36 +175,34 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "payee": { "type": "string" },
-                  "amount": { "type": "number" },
-                  "description": { "type": "string" }
+                  "planId": { "type": "string" },
+                  "successUrl": { "type": "string" },
+                  "cancelUrl": { "type": "string" }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Expense recorded" }
+          "200": { "description": "Stripe checkout URL returned" }
         }
       }
     },
-    "/api/v1/reports/dashboard": {
-      "get": {
-        "tags": ["Reports"],
-        "summary": "Get aggregate KPIs for the tenant dashboard",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+    "/api/v1/billing/webhook": {
+      "post": {
+        "tags": ["SaaS Billing"],
+        "summary": "Stripe event listener (Requires raw body)",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "string", "format": "binary" }
+            }
+          }
+        },
         "responses": {
-          "200": { "description": "Dashboard summary retrieved" }
-        }
-      }
-    },
-    "/api/v1/audit": {
-      "get": {
-        "tags": ["Audit"],
-        "summary": "Retrieve system audit logs for the organization",
-        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
-        "responses": {
-          "200": { "description": "Audit logs retrieved" }
+          "200": { "description": "Webhook received and verified" }
         }
       }
     }
