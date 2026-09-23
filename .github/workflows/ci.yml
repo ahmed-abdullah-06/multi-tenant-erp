@@ -58,6 +58,11 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+       # --- ADD THIS NEW STEP ---
+      - name: Security Vulnerability Scan
+        run: npm audit --audit-level=high
+      # -------------------------
+
       - name: Generate Prisma Client
         run: npm run prisma:generate
 

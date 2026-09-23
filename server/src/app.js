@@ -6,36 +6,51 @@ const fs = require('fs');
 const apiRoutes = require('./routes/index');
 const { errorHandler } = require('./middleware/errorHandler');
 const swaggerUi = require('swagger-ui-express');
+const { apiLimiter } = require('./middleware/rateLimiter'); // <-- Import the general API limiter
 
 const app = express();
 
-// Security and middleware
+// ==========================================
+// SECURITY HARDENING
+// ==========================================
+// Strict Content Security Policy to mitigate XSS attacks
 app.use(helmet({
-    contentSecurityPolicy: false // Allow inline scripts and client assets for development
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"], // Needed for basic frontend JS
+            styleSrc: ["'self'", "'unsafe-inline'"], 
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "https://api.stripe.com"], // Allow Stripe connections
+            fontSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+        },
+    },
+    crossOriginEmbedderPolicy: false,
 }));
-app.use(cors());
+
+// Restrict CORS to specific trusted origins in production
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['https://your-production-domain.com'] 
+        : '*',
+    credentials: true
+};
+app.use(cors(corsOptions));
 
 // ==========================================
 // STRIPE WEBHOOK MIDDLEWARE
 // ==========================================
-// CRITICAL: The Stripe webhook MUST receive the raw unparsed request body 
-// to verify the cryptographic signature. We apply express.raw() exclusively 
-// to this route BEFORE the global express.json() parser consumes the stream.
 app.use('/api/v1/billing/webhook', express.raw({ type: 'application/json' }));
 
-// Global body parsers for all other routes
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Global body parsers
+app.use(express.json({ limit: '10kb' })); // Limit body size to prevent payload bloat attacks
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // Serve static frontend assets
 const clientPath = path.join(__dirname, '../../client');
-app.use(express.static(clientPath, {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
-        }
-    }
-}));
+app.use(express.static(clientPath));
 
 // ==========================================
 // SWAGGER API DOCUMENTATION
@@ -46,22 +61,20 @@ if (fs.existsSync(swaggerDocumentPath)) {
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
         customSiteTitle: "Enterprise ERP SaaS API Docs"
     }));
-} else {
-    console.warn("Swagger documentation file not found at docs/api/swagger.json");
 }
 
-// API routes prefix
-app.use('/api/v1', apiRoutes);
+// ==========================================
+// ROUTING & RATE LIMITING
+// ==========================================
+// Apply the baseline rate limiter to ALL API routes to prevent DDoS
+app.use('/api/v1', apiLimiter, apiRoutes);
 
-// Favicon 204 handler
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-// Health check endpoint
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date() });
 });
 
-// Central error handler
 app.use(errorHandler);
 
 module.exports = app;
