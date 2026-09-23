@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const prisma = require('../../lib/prisma');
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_ACCESS_EXPIRES_IN = '15m'; // Short-lived access token
+const JWT_ACCESS_EXPIRES_IN = process.env.NODE_ENV === 'production' ? '15m' : '7d'; // Longer for dev
 const REFRESH_TOKEN_DAYS = 7; 
 
 // --- Helper: Token Generation & Session Storage ---

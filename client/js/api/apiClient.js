@@ -1,6 +1,6 @@
 // client/js/api/apiClient.js
 
-import { getState } from "../state/store.js";
+import { getState, clearState, setToken } from "../state/store.js";
 
 const API_BASE_URL = "/api/v1";
 
@@ -33,8 +33,10 @@ async function apiClient(endpoint, options = {}) {
    * Authentication failed — session is invalid/expired.
    */
   if (response.status === 401) {
+    // Clear storage and redirect to login
+    clearState();
     window.location.href = "/login.html";
-    throw new Error("Not authenticated");
+    throw new Error("Session expired. Please login again.");
   }
 
   let data = null;
