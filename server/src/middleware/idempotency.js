@@ -1,8 +1,41 @@
 // We will use a simple Redis client since you already need Redis for the BullMQ background jobs.
 const Redis = require('ioredis');
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+
+// Initialize Redis client with error handling
+let redis = null;
+
+if (process.env.REDIS_URL) {
+    redis = new Redis(process.env.REDIS_URL, {
+        retryStrategy: (times) => {
+            // Stop retrying after 3 attempts
+            if (times > 3) {
+                console.warn('[Redis] Max retry attempts reached. Idempotency middleware will be disabled.');
+                return null;
+            }
+            return Math.min(times * 50, 2000);
+        },
+        maxRetriesPerRequest: 3,
+        enableOfflineQueue: false
+    });
+
+    redis.on('error', (err) => {
+        console.warn('[Redis] Connection error:', err.message);
+    });
+
+    redis.on('connect', () => {
+        console.log('[Redis] Connected successfully for idempotency middleware');
+    });
+} else {
+    console.warn('[Redis] REDIS_URL not configured. Idempotency middleware will be disabled.');
+}
 
 const requireIdempotency = async (req, res, next) => {
+    // If Redis is not available, skip idempotency checks
+    if (!redis || redis.status !== 'ready') {
+        console.warn('[Idempotency] Redis unavailable, skipping idempotency check');
+        return next();
+    }
+
     const idempotencyKey = req.headers['idempotency-key'];
 
     // If no key is provided, either reject or bypass (standard is to bypass for non-strict routes)

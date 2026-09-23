@@ -1,10 +1,16 @@
 const Stripe = require('stripe');
 const prisma = require('../../lib/prisma');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY 
+    ? new Stripe(process.env.STRIPE_SECRET_KEY)
+    : null;
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 const handleStripeWebhook = async (req, res) => {
+    if (!stripe) {
+        return res.status(503).json({ error: 'Stripe is not configured on this server' });
+    }
+
     const signature = req.headers['stripe-signature'];
     let event;
 

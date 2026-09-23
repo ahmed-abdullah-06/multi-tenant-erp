@@ -2,14 +2,21 @@ const Stripe = require('stripe');
 const prisma = require('../../lib/prisma');
 
 // Initialize Stripe with your secret key from the environment
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2023-10-16' // Pin the API version for stability
-});
+// Handle missing keys gracefully to allow development without Stripe configured
+const stripe = process.env.STRIPE_SECRET_KEY 
+    ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2023-10-16' // Pin the API version for stability
+    })
+    : null;
 
 /**
  * Generates a Stripe Checkout URL for an organization subscribing to a specific plan.
  */
 const createCheckoutSession = async (organizationId, planId, successUrl, cancelUrl) => {
+    if (!stripe) {
+        throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment.');
+    }
+
     const organization = await prisma.organization.findUnique({ where: { id: organizationId } });
     const plan = await prisma.plan.findUnique({ where: { id: planId } });
 

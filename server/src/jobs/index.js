@@ -1,6 +1,4 @@
 // jobs/index.js
-import { Queue, Worker } from 'bullmq';
-import { processWebhook } from '../services/webhook.service.js';
 const logger = require('../lib/logger');
 
 /**
@@ -10,7 +8,7 @@ const logger = require('../lib/logger');
 const jobs = {
     dispatch: async (jobName, payload) => {
         logger.info(`[Background Job] Dispatched: ${jobName}`, payload);
-        // Execute or queue job asynchronously
+        // Execute or queue asynchronously
         setImmediate(async () => {
             try {
                 if (jobName === 'NOTIFICATION_DISPATCH') {
@@ -25,27 +23,58 @@ const jobs = {
     }
 };
 
-// Connection to Redis (Ensure REDIS_URL is in your .env)
-const connection = {
-  url: process.env.REDIS_URL
-};
+// BullMQ integration - only initialize if Redis is configured
+let webhookQueue = null;
+let worker = null;
 
-// Initialize the Queue
-export const webhookQueue = new Queue('webhook-deliveries', { connection });
+if (process.env.REDIS_URL) {
+    try {
+        const { Queue, Worker } = require('bullmq');
+        
+        // Connection to Redis
+        const connection = {
+            url: process.env.REDIS_URL,
+            retryStrategy: (times) => {
+                if (times > 3) {
+                    console.warn('[BullMQ] Max retry attempts reached. Queue disabled.');
+                    return null;
+                }
+                return Math.min(times * 50, 2000);
+            },
+            maxRetriesPerRequest: 3,
+            enableOfflineQueue: false
+        };
 
-// Initialize the Worker to process jobs
-const worker = new Worker('webhook-deliveries', async (job) => {
-  if (job.name === 'deliver-webhook') {
-    await processWebhook(job.data);
-  }
-}, { connection });
+        // Initialize the Queue
+        webhookQueue = new Queue('webhook-deliveries', { connection });
 
-worker.on('completed', (job) => {
-  console.log(`Job ${job.id} has completed!`);
-});
+        // Initialize the Worker to process jobs
+        worker = new Worker('webhook-deliveries', async (job) => {
+            if (job.name === 'deliver-webhook') {
+                const { processWebhook } = require('../services/webhook.service');
+                await processWebhook(job.data);
+            }
+        }, { connection });
 
-worker.on('failed', (job, err) => {
-  console.error(`Job ${job.id} has failed with ${err.message}`);
-});
+        worker.on('completed', (job) => {
+            console.log(`[BullMQ] Job ${job.id} completed`);
+        });
+
+        worker.on('failed', (job, err) => {
+            console.error(`[BullMQ] Job ${job.id} failed: ${err.message}`);
+        });
+
+        worker.on('error', (err) => {
+            console.warn('[BullMQ] Worker error:', err.message);
+        });
+
+        console.log('[BullMQ] Queue and worker initialized successfully');
+    } catch (error) {
+        console.warn('[BullMQ] Failed to initialize:', error.message);
+    }
+} else {
+    console.warn('[BullMQ] REDIS_URL not configured. Background job queue disabled.');
+}
 
 module.exports = jobs;
+module.exports.webhookQueue = webhookQueue;
