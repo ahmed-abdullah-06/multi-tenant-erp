@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: erp_api
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      # The api container connects to the db container via its service name
+      - DATABASE_URL=postgresql://erp_admin:secure_password_123@db:5432/multi_tenant_erp
+      # The api container connects to the redis container via its service name
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=15m
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: erp_postgres
+    environment:
+      - POSTGRES_USER=erp_admin
+      - POSTGRES_PASSWORD=secure_password_123
+      - POSTGRES_DB=multi_tenant_erp
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: erp_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+
+# Named volumes persist data even if the containers are destroyed
+volumes:
+  pgdata:
+  redisdata:
