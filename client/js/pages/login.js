@@ -34,18 +34,69 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Password visibility toggle
   const togglePasswordBtn = document.getElementById("toggle-password");
+  const eyeOpen = document.getElementById("eye-open");
+  const eyeClosed = document.getElementById("eye-closed");
   
-  if (togglePasswordBtn && passwordInput) {
+  if (togglePasswordBtn && passwordInput && eyeOpen && eyeClosed) {
     togglePasswordBtn.addEventListener("click", () => {
       if (passwordInput.type === "password") {
         passwordInput.type = "text";
-        togglePasswordBtn.textContent = "Hide";
+        eyeOpen.style.display = "none";
+        eyeClosed.style.display = "block";
         togglePasswordBtn.setAttribute("aria-label", "Hide password");
       } else {
         passwordInput.type = "password";
-        togglePasswordBtn.textContent = "Show";
+        eyeOpen.style.display = "block";
+        eyeClosed.style.display = "none";
         togglePasswordBtn.setAttribute("aria-label", "Show password");
       }
+    });
+  }
+
+  // Password strength indicator
+  const strengthBar = document.getElementById("password-strength-bar");
+  const strengthText = document.getElementById("password-strength-text");
+
+  function checkPasswordStrength(password) {
+    if (!password) {
+      return { strength: 0, text: "", color: "#94a3b8" };
+    }
+
+    let strength = 0;
+    
+    // Length check
+    if (password.length >= 8) strength += 1;
+    if (password.length >= 12) strength += 1;
+    
+    // Contains lowercase
+    if (/[a-z]/.test(password)) strength += 1;
+    
+    // Contains uppercase
+    if (/[A-Z]/.test(password)) strength += 1;
+    
+    // Contains numbers
+    if (/\d/.test(password)) strength += 1;
+    
+    // Contains special characters
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength += 1;
+
+    // Determine strength level
+    if (strength <= 2) {
+      return { strength: 33, text: "Weak", color: "#ef4444" };
+    } else if (strength <= 4) {
+      return { strength: 66, text: "Medium", color: "#f59e0b" };
+    } else {
+      return { strength: 100, text: "Strong", color: "#10b981" };
+    }
+  }
+
+  if (passwordInput && strengthBar && strengthText) {
+    passwordInput.addEventListener("input", () => {
+      const result = checkPasswordStrength(passwordInput.value);
+      strengthBar.style.width = result.strength + "%";
+      strengthBar.style.background = result.color;
+      strengthText.textContent = result.text;
+      strengthText.style.color = result.color;
     });
   }
 

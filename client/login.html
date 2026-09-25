@@ -31,9 +31,24 @@
           <label for="password" class="form-label">Password</label>
           <div style="position: relative; display: flex; align-items: center;">
             <input type="password" id="password" class="form-input" required placeholder="••••••••" minlength="8" style="padding-right: 60px; flex: 1;">
-            <button type="button" id="toggle-password" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; color: #262626; font-size: 0.875rem; padding: 8px 10px; line-height: 1; font-weight: 600; user-select: none; -webkit-tap-highlight-color: transparent;" aria-label="Show password">
-              Show
+            <button type="button" id="toggle-password" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; padding: 8px; line-height: 0; display: flex; align-items: center; justify-content: center;" aria-label="Show password">
+              <!-- Eye icon (visible when password is hidden) -->
+              <svg id="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <!-- Eye-off icon (visible when password is shown) -->
+              <svg id="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
             </button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 0.5rem;">
+            <div style="flex: 1; height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
+              <div id="password-strength-bar" style="height: 100%; width: 0%; background: #94a3b8; transition: all 0.3s ease;"></div>
+            </div>
+            <span id="password-strength-text" style="font-size: 0.75rem; font-weight: 600; min-width: 60px;"></span>
           </div>
           <small style="display: block; margin-top: 0.25rem; color: #64748b; font-size: 0.875rem;">Minimum 8 characters</small>
         </div>
