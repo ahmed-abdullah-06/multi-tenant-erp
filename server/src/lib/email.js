@@ -26,5 +26,12 @@ const sendEmail = async (options) => {
         throw new Error('Email could not be sent.');
     }
 };
-
 module.exports = sendEmail;
+
+// TEMPORARY TEST: Add this to the bottom of email.js
+sendEmail({
+    email: process.env.EMAIL_USER, // Will send an email to yourself
+    subject: 'Nodemailer Connection Test',
+    message: 'If you are reading this, the Gmail App Password is working perfectly.'
+}).then(() => console.log('\n---> TEST SUCCESS: Email connected!\n'))
+  .catch(err => console.error('\n---> TEST FAILED:', err, '\n'));
