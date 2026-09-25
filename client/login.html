@@ -30,9 +30,9 @@
         <div class="form-group">
           <label for="password" class="form-label">Password</label>
           <div style="position: relative;">
-            <input type="password" id="password" class="form-input" required placeholder="••••••••" minlength="8">
-            <button type="button" id="toggle-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748b; font-size: 1.2rem; padding: 0; line-height: 1;" aria-label="Toggle password visibility">
-              👁️
+            <input type="password" id="password" class="form-input" required placeholder="••••••••" minlength="8" style="padding-right: 45px;">
+            <button type="button" id="toggle-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748b; font-size: 0.9rem; padding: 4px 8px; line-height: 1; font-weight: 600;" aria-label="Show password">
+              Show
             </button>
           </div>
           <small style="display: block; margin-top: 0.25rem; color: #64748b; font-size: 0.875rem;">Minimum 8 characters</small>
@@ -45,7 +45,7 @@
 
       <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: #64748b;">
         <span id="toggle-text">Don't have an account?</span>
-        <button id="toggle-mode-btn" style="background: none; border: none; color: #2563eb; font-weight: 600; margin-left: 0.25rem;">
+        <button type="button" id="toggle-mode-btn" style="background: none; border: none; color: #2563eb; font-weight: 600; margin-left: 0.25rem; cursor: pointer; text-decoration: none;">
           Create organization
         </button>
       </div>

@@ -40,19 +40,21 @@ document.addEventListener("DOMContentLoaded", () => {
     togglePasswordBtn.addEventListener("click", () => {
       if (passwordInput.type === "password") {
         passwordInput.type = "text";
-        togglePasswordBtn.textContent = "🙈";
+        togglePasswordBtn.textContent = "Hide";
         togglePasswordBtn.setAttribute("aria-label", "Hide password");
       } else {
         passwordInput.type = "password";
-        togglePasswordBtn.textContent = "👁️";
+        togglePasswordBtn.textContent = "Show";
         togglePasswordBtn.setAttribute("aria-label", "Show password");
       }
     });
   }
 
-  toggleBtn.addEventListener("click", () => {
+  toggleBtn.addEventListener("click", (e) => {
+    e.preventDefault(); // Prevent any default button behavior
     isRegisterMode = !isRegisterMode;
     hideAlert();
+    
     if (isRegisterMode) {
       authTitle.textContent = "Create Organization";
       authSubtitle.textContent = "Set up your tenant workspace and admin account";
