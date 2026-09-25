@@ -1,19 +1,18 @@
 const nodemailer = require('nodemailer');
-const logger = require('./logger');
+const logger = require('./logger'); // Assuming you are using your Winston logger
 
 const sendEmail = async (options) => {
-    // Create a transporter using standard SMTP environment variables
+    // The simplified transporter using only the service name and app password
     const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.mailtrap.io',
-        port: process.env.SMTP_PORT || 2525,
+        service: 'gmail',
         auth: {
-            user: process.env.SMTP_USER || 'your_smtp_user',
-            pass: process.env.SMTP_PASS || 'your_smtp_pass'
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
         }
     });
 
     const mailOptions = {
-        from: `ERP System <${process.env.EMAIL_FROM || 'noreply@erpsaas.com'}>`,
+        from: process.env.EMAIL_USER,
         to: options.email,
         subject: options.subject,
         text: options.message,
