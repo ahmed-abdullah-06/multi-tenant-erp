@@ -61,12 +61,14 @@
 </head>
 <body>
 
+    <!-- Replace the old sidebar with this new RBAC-powered sidebar -->
     <div class="sidebar">
         <h2>ERP System</h2>
         <nav>
-            <p><a href="/dashboard.html" style="color: inherit; text-decoration: none;">← Back to Dashboard</a></p>
-            <p><strong>Settings</strong></p>
-            <p>Billing & Plans</p>
+            <p><a href="/dashboard.html" style="color: inherit; text-decoration: none;">Dashboard</a></p>
+            <p data-permission="inventory:read"><a href="/inventory.html" style="color: inherit; text-decoration: none;">Inventory Management</a></p>
+            <p data-permission="reports:read"><a href="/ledger.html" style="color: inherit; text-decoration: none;">General Ledger</a></p>
+            <p data-permission="billing:write"><a href="/settings.html" style="color: inherit; text-decoration: none;"><strong>Settings & Billing</strong></a></p>
         </nav>
     </div>
 
@@ -125,6 +127,48 @@
             </div>
         </div>
     </div>
+    
+    <!-- 1. The RBAC script runs first to hide unauthorized buttons -->
+    <script src="/js/rbac.js"></script>
+    <!-- 2. The page-specific script runs second to load the actual data -->
+    <script src="/js/settings.js"></script>
+</body>
+</html></option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Save Settings</button>
+            </form>
+        </div>
+
+        <div class="glass-panel" id="billing-settings">
+            <h2>Subscription Plan</h2>
+            <p>Current Status: <strong id="current-status">Loading...</strong></p>
+            
+            <div class="plan-grid">
+                <div class="plan-card">
+                    <h3>Professional</h3>
+                    <p>$49 / month</p>
+                    <ul style="text-align: left; color: #aaa; font-size: 0.9em;">
+                        <li>Up to 10 Users</li>
+                        <li>Standard Ledger</li>
+                        <li>Email Support</li>
+                    </ul>
+                    <button class="btn-primary subscribe-btn" data-plan-id="plan_pro_123">Subscribe to Pro</button>
+                </div>
+                <div class="plan-card">
+                    <h3>Enterprise</h3>
+                    <p>$199 / month</p>
+                    <ul style="text-align: left; color: #aaa; font-size: 0.9em;">
+                        <li>Unlimited Users</li>
+                        <li>Advanced Idempotency API</li>
+                        <li>24/7 Priority Support</li>
+                    </ul>
+                    <button class="btn-primary subscribe-btn" data-plan-id="plan_ent_456">Subscribe to Enterprise</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 
     <script src="/js/settings.js"></script>
 </body>

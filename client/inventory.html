@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management - ERP SaaS</title>
+    <style>
+        /* Base Cyberpunk & Glassmorphism Theme */
+        :root {
+            --bg-color: #0b0b10;
+            --panel-bg: rgba(20, 20, 32, 0.65);
+            --border-color: #2a2a3a;
+            --text-main: #e0e0e0;
+            --text-muted: #888899;
+            --accent-red: #d32f2f;
+            --accent-glow: 0 0 12px rgba(211, 47, 47, 0.6);
+            --success-green: #00e676;
+            --warning-orange: #ff9100;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            background-image: linear-gradient(rgba(211, 47, 47, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(211, 47, 47, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .sidebar { width: 250px; border-right: 1px solid var(--border-color); padding: 20px; background: rgba(11, 11, 16, 0.9); }
+        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; position: relative; }
+        
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h1, h2 { margin: 0; font-weight: 600; }
+        h1 { color: #fff; text-shadow: 0 0 5px rgba(255,255,255,0.2); }
+        
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-top: 15px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+        tbody tr:hover { background: rgba(211, 47, 47, 0.05); }
+        .text-right { text-align: right; }
+        .font-mono { font-family: monospace; font-size: 1.1em; }
+
+        .btn-primary {
+            background: transparent; color: var(--accent-red); border: 1px solid var(--accent-red);
+            padding: 8px 16px; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; font-size: 0.8rem;
+        }
+        .btn-primary:hover { background: var(--accent-red); color: white; box-shadow: var(--accent-glow); }
+        
+        .btn-small { padding: 4px 10px; font-size: 0.75rem; border-color: var(--text-muted); color: var(--text-main); }
+        .btn-small:hover { border-color: white; background: rgba(255,255,255,0.1); box-shadow: none; }
+
+        /* Status Badges */
+        .status { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+        .status-ok { background: rgba(0, 230, 118, 0.1); color: var(--success-green); border: 1px solid var(--success-green); }
+        .status-low { background: rgba(255, 145, 0, 0.1); color: var(--warning-orange); border: 1px solid var(--warning-orange); }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal {
+            background: #14141e; border: 1px solid var(--accent-red);
+            padding: 30px; border-radius: 8px; width: 400px;
+            box-shadow: 0 0 20px rgba(211, 47, 47, 0.3);
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.85rem; }
+        input { width: 100%; padding: 10px; background: #0b0b10; border: 1px solid var(--border-color); color: white; border-radius: 4px; box-sizing: border-box; }
+        input:focus { outline: none; border-color: var(--accent-red); }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>ERP System</h2>
+        <nav>
+            <p><a href="/dashboard.html" style="color: var(--text-muted); text-decoration: none;">Dashboard</a></p>
+            <p data-permission="inventory:read" style="color: var(--text-main); font-weight: bold; border-left: 2px solid var(--accent-red); padding-left: 10px;">Inventory Management</p>
+            <p data-permission="reports:read"><a href="/ledger.html" style="color: var(--text-muted); text-decoration: none;">General Ledger</a></p>
+            <p data-permission="billing:write"><a href="/settings.html" style="color: var(--text-muted); text-decoration: none;">Org Settings & Billing</a></p>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="header-flex">
+            <h1>Active Inventory</h1>
+            <button class="btn-primary" data-permission="inventory:write">+ Add Product</button>
+        </div>
+
+        <div class="glass-panel">
+            <table>
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Product Name</th>
+                        <th>Price</th>
+                        <th class="text-right">Current Stock</th>
+                        <th class="text-right">Status</th>
+                        <th class="text-right" data-permission="inventory:write">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-body">
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading inventory...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Stock Adjustment Modal -->
+    <div class="modal-overlay" id="adjustment-modal">
+        <div class="modal">
+            <div class="header-flex" style="margin-bottom: 15px;">
+                <h2 id="modal-title">Adjust Stock</h2>
+                <button class="btn-primary btn-small" id="btn-close-modal" style="border: none;">X</button>
+            </div>
+            <form id="adjustment-form">
+                <input type="hidden" id="modal-balance-id">
+                <input type="hidden" id="modal-current-version">
+                
+                <div class="form-group">
+                    <label>Adjustment Quantity (Use negative for reductions)</label>
+                    <input type="number" id="modal-qty-change" required placeholder="e.g., 50 or -10">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">Confirm Adjustment</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/rbac.js"></script>
+    <script src="/js/inventory.js"></script>
+</body>
+</html>

@@ -141,12 +141,14 @@
 </head>
 <body>
 
+    <!-- Replace the old sidebar with this new RBAC-powered sidebar -->
     <div class="sidebar">
         <h2>ERP System</h2>
         <nav>
-            <p><a href="/dashboard.html" style="color: var(--text-muted); text-decoration: none;">← Back to Dashboard</a></p>
-            <p style="color: var(--text-main); font-weight: bold; border-left: 2px solid var(--accent-red); padding-left: 10px;">General Ledger</p>
-            <p><a href="/settings.html" style="color: var(--text-muted); text-decoration: none;">Settings</a></p>
+            <p><a href="/dashboard.html" style="color: inherit; text-decoration: none;">Dashboard</a></p>
+            <p data-permission="inventory:read"><a href="/inventory.html" style="color: inherit; text-decoration: none;">Inventory Management</a></p>
+            <p data-permission="reports:read"><a href="/ledger.html" style="color: inherit; text-decoration: none;"><strong>General Ledger</strong></a></p>
+            <p data-permission="billing:write"><a href="/settings.html" style="color: inherit; text-decoration: none;">Settings & Billing</a></p>
         </nav>
     </div>
 
@@ -207,6 +209,9 @@
         </div>
     </div>
 
+    <!-- 1. The RBAC script runs first to hide unauthorized buttons -->
+    <script src="/js/rbac.js"></script>
+    <!-- 2. The page-specific script runs second to load the actual data -->
     <script src="/js/ledger.js"></script>
 </body>
 </html>
