@@ -3,10 +3,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs');
-// --- SENTRY IMPORTS ---
-const Sentry = require('@sentry/node');
-const { nodeProfilingIntegration } = require('@sentry/profiling-node');
-
 const apiRoutes = require('./routes/index');
 const { errorHandler } = require('./middleware/errorHandler');
 const swaggerUi = require('swagger-ui-express');
@@ -16,36 +12,52 @@ const { attachCorrelationId } = require('./middleware/correlationId');
 const app = express();
 
 // ==========================================
-// SENTRY INITIALIZATION
+// SENTRY INITIALIZATION (OPTIONAL)
 // ==========================================
-Sentry.init({
-    dsn: process.env.SENTRY_DSN || '', // Add your DSN to .env
-    integrations: [
-        new Sentry.Integrations.Http({ tracing: true }),
-        new Sentry.Integrations.Express({ app }),
-        nodeProfilingIntegration(),
-    ],
-    // Tracing and Profiling sample rates (tune down in production)
-    tracesSampleRate: 1.0, 
-    profilesSampleRate: 1.0,
-});
+let Sentry = null;
+if (process.env.SENTRY_DSN) {
+    try {
+        Sentry = require('@sentry/node');
+        const { nodeProfilingIntegration } = require('@sentry/profiling-node');
 
-// The request handler must be the first middleware on the app
-app.use(Sentry.Handlers.requestHandler());
-// TracingHandler creates a trace for every incoming request
-app.use(Sentry.Handlers.tracingHandler());
+        Sentry.init({
+            dsn: process.env.SENTRY_DSN,
+            integrations: [
+                new Sentry.Integrations.Http({ tracing: true }),
+                new Sentry.Integrations.Express({ app }),
+                nodeProfilingIntegration(),
+            ],
+            tracesSampleRate: 1.0, 
+            profilesSampleRate: 1.0,
+        });
+
+        // The request handler must be the first middleware on the app
+        app.use(Sentry.Handlers.requestHandler());
+        // TracingHandler creates a trace for every incoming request
+        app.use(Sentry.Handlers.tracingHandler());
+        
+        console.log('[Sentry] Initialized successfully');
+    } catch (error) {
+        console.warn('[Sentry] Not installed or failed to initialize:', error.message);
+        Sentry = null;
+    }
+} else {
+    console.log('[Sentry] Skipped - no SENTRY_DSN configured');
+}
 
 // ==========================================
 // SECURITY HARDENING & TRACING
 // ==========================================
-app.use(helmet({ /* ... existing CSP config ... */ }));
-app.use(cors({ origin: '*', credentials: true }));
+app.use(helmet({
+    contentSecurityPolicy: false // Allow inline scripts and client assets for development
+}));
+app.use(cors());
 
 app.use(attachCorrelationId);
 
 // Bind the Correlation ID to Sentry so cloud logs match local logs
 app.use((req, res, next) => {
-    if (req.correlationId) {
+    if (req.correlationId && Sentry) {
         Sentry.setTag("correlation_id", req.correlationId);
     }
     next();
@@ -77,7 +89,9 @@ app.get('/health', (req, res) => res.status(200).json({ status: 'ok', timestamp:
 // ERROR HANDLING
 // ==========================================
 // The Sentry error handler must be before any other error middleware
-app.use(Sentry.Handlers.errorHandler());
+if (Sentry) {
+    app.use(Sentry.Handlers.errorHandler());
+}
 
 // Your custom centralized error handler
 app.use(errorHandler);
