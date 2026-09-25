@@ -102,7 +102,28 @@ const getTrialBalance = async (organizationId) => {
     };
 };
 
+/**
+ * Fetches recent journal entries and their associated lines for the tenant.
+ */
+const getJournalEntries = async (organizationId, limit = 10) => {
+    return await prisma.journalEntry.findMany({
+        where: { organizationId },
+        include: {
+            lines: {
+                include: {
+                    account: {
+                        select: { code: true, name: true, type: true }
+                    }
+                }
+            }
+        },
+        orderBy: { date: 'desc' },
+        take: parseInt(limit, 10)
+    });
+};
+
 module.exports = {
     recordTransaction,
-    getTrialBalance
+    getTrialBalance,
+    getJournalEntries // <-- Add to exports
 };
