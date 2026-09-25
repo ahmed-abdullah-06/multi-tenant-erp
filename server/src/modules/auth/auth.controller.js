@@ -71,10 +71,39 @@ const me = async (req, res, next) => {
     }
 };
 
+const forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        // Pass the frontend origin so the email link points to the correct domain
+        const originUrl = req.headers.origin || `http://${req.headers.host}`;
+        
+        await authService.forgotPassword(email, originUrl);
+        
+        return successResponse(res, 200, 'If an account with that email exists, a reset link has been sent.');
+    } catch (error) {
+        next(error);
+    }
+};
+
+const resetPassword = async (req, res, next) => {
+    try {
+        const { token } = req.params;
+        const { newPassword } = req.body;
+        
+        await authService.resetPassword(token, newPassword);
+        
+        return successResponse(res, 200, 'Password has been reset successfully. You may now log in.');
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     register,
     login,
     refreshToken,
     logout,
-    me
+    me,
+    forgotPassword,
+    resetPassword
 };
