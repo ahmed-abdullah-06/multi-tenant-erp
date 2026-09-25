@@ -32,6 +32,24 @@ document.addEventListener("DOMContentLoaded", () => {
     alertBox.style.display = "none";
   }
 
+  // Password visibility toggle
+  const passwordInput = document.getElementById("password");
+  const togglePasswordBtn = document.getElementById("toggle-password");
+  
+  if (togglePasswordBtn) {
+    togglePasswordBtn.addEventListener("click", () => {
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        togglePasswordBtn.textContent = "🙈";
+        togglePasswordBtn.setAttribute("aria-label", "Hide password");
+      } else {
+        passwordInput.type = "password";
+        togglePasswordBtn.textContent = "👁️";
+        togglePasswordBtn.setAttribute("aria-label", "Show password");
+      }
+    });
+  }
+
   toggleBtn.addEventListener("click", () => {
     isRegisterMode = !isRegisterMode;
     hideAlert();
@@ -62,6 +80,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const email = emailInput.value.trim();
     const password = passwordInput.value;
+
+    // Client-side validation
+    if (password.length < 8) {
+      showAlert("Password must be at least 8 characters long");
+      submitBtn.disabled = false;
+      submitBtn.textContent = isRegisterMode ? "Create Account & Org" : "Sign In";
+      return;
+    }
 
     try {
       if (isRegisterMode) {

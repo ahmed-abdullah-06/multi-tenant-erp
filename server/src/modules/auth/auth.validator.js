@@ -6,8 +6,8 @@ const register = (req, res, next) => {
     if (!email || typeof email !== 'string' || !email.includes('@')) {
         return res.status(400).json({ error: 'A valid email is required' });
     }
-    if (!password || typeof password !== 'string' || password.length < 6) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (!password || typeof password !== 'string' || password.length < 8) {
+        return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
     next();
 };

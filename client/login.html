@@ -29,7 +29,13 @@
 
         <div class="form-group">
           <label for="password" class="form-label">Password</label>
-          <input type="password" id="password" class="form-input" required placeholder="••••••••">
+          <div style="position: relative;">
+            <input type="password" id="password" class="form-input" required placeholder="••••••••" minlength="8">
+            <button type="button" id="toggle-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748b; font-size: 1.2rem; padding: 0; line-height: 1;" aria-label="Toggle password visibility">
+              👁️
+            </button>
+          </div>
+          <small style="display: block; margin-top: 0.25rem; color: #64748b; font-size: 0.875rem;">Minimum 8 characters</small>
         </div>
 
         <button type="submit" id="submit-btn" class="btn btn-primary btn-full">
