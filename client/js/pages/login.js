@@ -33,10 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Password visibility toggle
-  const passwordInput = document.getElementById("password");
   const togglePasswordBtn = document.getElementById("toggle-password");
   
-  if (togglePasswordBtn) {
+  if (togglePasswordBtn && passwordInput) {
     togglePasswordBtn.addEventListener("click", () => {
       if (passwordInput.type === "password") {
         passwordInput.type = "text";
