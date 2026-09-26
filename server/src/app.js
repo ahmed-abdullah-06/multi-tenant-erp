@@ -27,7 +27,7 @@ if (process.env.SENTRY_DSN) {
                 new Sentry.Integrations.Express({ app }),
                 nodeProfilingIntegration(),
             ],
-            tracesSampleRate: 1.0, 
+            tracesSampleRate: 1.0,
             profilesSampleRate: 1.0,
         });
 
@@ -35,7 +35,7 @@ if (process.env.SENTRY_DSN) {
         app.use(Sentry.Handlers.requestHandler());
         // TracingHandler creates a trace for every incoming request
         app.use(Sentry.Handlers.tracingHandler());
-        
+
         console.log('[Sentry] Initialized successfully');
     } catch (error) {
         console.warn('[Sentry] Not installed or failed to initialize:', error.message);
@@ -48,10 +48,16 @@ if (process.env.SENTRY_DSN) {
 // ==========================================
 // SECURITY HARDENING & TRACING
 // ==========================================
+// CSP is disabled only outside production so local/dev client assets and
+// inline scripts still work. In production, helmet's default CSP applies.
 app.use(helmet({
-    contentSecurityPolicy: false // Allow inline scripts and client assets for development
+    contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false
 }));
-app.use(cors());
+
+// Lock CORS to the actual frontend origin. Falls back to localhost for dev.
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5000'
+}));
 
 app.use(attachCorrelationId);
 
@@ -66,9 +72,25 @@ app.use((req, res, next) => {
 // ==========================================
 // ROUTES & PARSERS
 // ==========================================
+// Stripe needs the raw, unparsed request body to verify the webhook
+// signature. This route reads the stream fully via express.raw().
 app.use('/api/v1/billing/webhook', express.raw({ type: 'application/json' }));
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// express.json()/urlencoded() must NOT run on the webhook route, or they
+// will try to re-read a request stream that express.raw() already
+// consumed above -- silently breaking Stripe signature verification.
+app.use((req, res, next) => {
+    if (req.originalUrl === '/api/v1/billing/webhook') {
+        return next();
+    }
+    express.json({ limit: '10kb' })(req, res, next);
+});
+app.use((req, res, next) => {
+    if (req.originalUrl === '/api/v1/billing/webhook') {
+        return next();
+    }
+    express.urlencoded({ extended: true, limit: '10kb' })(req, res, next);
+});
 
 const clientPath = path.join(__dirname, '../../client');
 app.use(express.static(clientPath));
