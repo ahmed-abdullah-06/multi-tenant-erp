@@ -3,6 +3,7 @@ import apiClient from "../api/apiClient.js";
 import { renderSidebar } from "../components/sidebar.js";
 import { renderNavbar } from "../components/navbar.js";
 import { getOrganizationId } from "../state/store.js";
+import { getAccess, hasPermission } from '../state/store.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!requireAuthGuard()) return;
@@ -750,3 +751,47 @@ async function renderAuditView(container) {
     </div>
   `;
 }
+
+
+export const initDashboard = async () => {
+  const access = getAccess();
+  
+  // Set visual role badge
+  document.getElementById('role-badge').innerText = `[ ACCESS LEVEL: ${access.roleName.toUpperCase()} ]`;
+  
+  const grid = document.getElementById('dashboard-grid');
+  grid.innerHTML = '';
+
+  // 1. Admin/Owner Overview Widget
+  if (hasPermission('manage:system')) {
+    grid.innerHTML += `
+      <div class="bg-black/40 border border-red-500/30 p-5 rounded backdrop-blur-md">
+        <h3 class="text-red-400 font-mono text-sm mb-2">ORG OVERVIEW</h3>
+        <div class="text-2xl text-white" id="metric-revenue">Loading...</div>
+      </div>
+    `;
+    fetchAdminMetrics();
+  }
+
+  // 2. Inventory Staff Widget
+  if (hasPermission('read:inventory')) {
+    grid.innerHTML += `
+      <div class="bg-black/40 border border-gray-700 p-5 rounded backdrop-blur-md">
+        <h3 class="text-gray-400 font-mono text-sm mb-2">LOW STOCK ALERTS</h3>
+        <ul id="widget-low-stock" class="space-y-2 text-sm text-gray-300"></ul>
+      </div>
+    `;
+    fetchLowStockWidget();
+  }
+
+  // 3. Sales Staff Widget
+  if (hasPermission('write:sales')) {
+    grid.innerHTML += `
+      <div class="bg-black/40 border border-gray-700 p-5 rounded backdrop-blur-md flex flex-col justify-center items-center">
+        <button class="px-4 py-2 bg-red-600/20 text-red-400 border border-red-500/50 rounded hover:bg-red-600/40 transition-all font-mono">
+          + NEW TRANSACTION
+        </button>
+      </div>
+    `;
+  }
+};

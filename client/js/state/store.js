@@ -71,3 +71,20 @@ export function clearState() {
   state = { token: null, organizationId: null };
   localStorage.removeItem(STORAGE_KEY);
 }
+
+export const login = (responseData) => {
+  localStorage.setItem('auth_token', responseData.token);
+  localStorage.setItem('user_data', JSON.stringify(responseData.user));
+  localStorage.setItem('user_access', JSON.stringify(responseData.access));
+};
+
+export const getAccess = () => {
+  return JSON.parse(localStorage.getItem('user_access')) || { roleName: 'Guest', permissions: [] };
+};
+
+export const hasPermission = (requiredPermission) => {
+  const access = getAccess();
+  // Owner/Admin role bypasses all frontend UI checks
+  if (access.roleName === 'Owner' || access.roleName === 'Admin') return true;
+  return access.permissions.includes(requiredPermission);
+};

@@ -29,6 +29,40 @@ const login = async (req, res, next) => {
         }
         next(error);
     }
+    // server/src/modules/auth/auth.controller.js
+
+    // Inside your login function, after verifying the password:
+    const membership = await prisma.organizationMember.findUnique({
+    where: { 
+        userId_organizationId: { 
+        userId: user.id, 
+        organizationId: activeOrgId // Assuming default or requested org
+        } 
+    },
+    include: { 
+        role: { 
+        include: { permissions: true } 
+        } 
+    }
+    });
+
+    // Flatten the permissions into a simple array of action strings
+    const permissions = membership.role.permissions.map(p => p.action);
+
+    // Send to client
+    res.status(200).json({
+    token,
+    user: {
+    id: user.id,
+    email: user.email,
+    name: user.name
+    },
+    access: {
+    roleId: membership.roleId,
+    roleName: membership.role.name, // e.g., 'Owner', 'Staff'
+    permissions: permissions        // e.g., ['read:inventory', 'write:sales', 'manage:users']
+    }
+    });
 };
 
 const refreshToken = async (req, res, next) => {
