@@ -1,27 +1,461 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=/login.html">
-  <title>Enterprise Multi-Tenant ERP SaaS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus ERP — Run your entire business from one place</title>
+  <meta name="description" content="Bring inventory, purchasing, sales, and team operations together in one secure ERP workspace." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/landing.css" />
 </head>
 <body>
-  <script>
-    const session = localStorage.getItem("erp_session");
-    if (session) {
-      try {
-        const parsed = JSON.parse(session);
-        if (parsed.token) {
-          window.location.href = "/dashboard.html";
-        } else {
-          window.location.href = "/login.html";
-        }
-      } catch (e) {
-        window.location.href = "/login.html";
-      }
-    } else {
-      window.location.href = "/login.html";
-    }
-  </script>
+
+<!-- ─── Navbar ─────────────────────────────────────────────────────────────── -->
+<header class="navbar" id="top">
+  <div class="navbar-inner">
+    <a href="#top" class="logo" aria-label="Nexus ERP home">
+      <div class="logo-icon">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <rect x="2" y="2" width="6" height="6" rx="1.5" fill="white"/>
+          <rect x="10" y="2" width="6" height="6" rx="1.5" fill="white" fill-opacity=".6"/>
+          <rect x="2" y="10" width="6" height="6" rx="1.5" fill="white" fill-opacity=".6"/>
+          <rect x="10" y="10" width="6" height="6" rx="1.5" fill="white"/>
+        </svg>
+      </div>
+      <span class="logo-wordmark logo-wordmark-dark">Nexus ERP</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Main">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#about">About</a>
+    </nav>
+
+    <div class="nav-ctas">
+      <a class="btn btn-ghost" href="/login.html">Log In</a>
+      <a class="btn btn-primary" href="/login.html?mode=register">Get Started</a>
+    </div>
+
+    <button type="button" class="hamburger" id="hamburgerBtn" aria-label="Toggle menu" aria-controls="mobileMenu" aria-expanded="false">
+      <svg id="iconMenu" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="19" y2="6"/><line x1="3" y1="11" x2="19" y2="11"/><line x1="3" y1="16" x2="19" y2="16"/>
+      </svg>
+      <svg id="iconClose" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none" aria-hidden="true">
+        <line x1="4" y1="4" x2="18" y2="18"/><line x1="18" y1="4" x2="4" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="mobile-menu" id="mobileMenu" role="navigation" aria-label="Mobile">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#about">About</a>
+    <div class="mobile-menu-btns">
+      <a class="btn btn-outline btn-block" href="/login.html">Log In</a>
+      <a class="btn btn-primary btn-block" href="/login.html?mode=register">Get Started</a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── Hero ────────────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-grid-bg" aria-hidden="true"></div>
+  <div class="hero-inner">
+
+    <div class="hero-copy">
+      <div class="hero-badge">
+        <span class="hero-badge-dot" aria-hidden="true"></span>
+        Inventory, sales, and operations — connected
+      </div>
+      <h1 class="hero-headline">
+        Run your entire<br>
+        <span>business from</span><br>
+        one place.
+      </h1>
+      <p class="hero-sub">
+        Nexus ERP brings inventory, purchasing, sales, expenses, and reporting into one secure workspace — built for growing businesses that need real control, not spreadsheet chaos.
+      </p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary btn-lg" href="/login.html?mode=register">
+          Get Started Free
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="8" x2="13" y2="8"/><polyline points="9 4 13 8 9 12"/></svg>
+        </a>
+        <a class="btn btn-outline btn-lg" href="#how">See how it works</a>
+      </div>
+      <p class="hero-note">Start with one organization and add your team as you grow.</p>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="mockup" role="img" aria-label="Nexus ERP dashboard preview">
+        <div class="mockup-titlebar">
+          <div class="dot dot-red"></div>
+          <div class="dot dot-amber"></div>
+          <div class="dot dot-green"></div>
+          <div class="mockup-url">workspace / dashboard</div>
+        </div>
+        <div class="mockup-body">
+          <div class="mockup-sidebar">
+            <div class="sidebar-label">Navigation</div>
+            <div class="sidebar-item active">Dashboard</div>
+            <div class="sidebar-item">Inventory</div>
+            <div class="sidebar-item">Sales</div>
+            <div class="sidebar-item">Purchasing</div>
+            <div class="sidebar-item">Accounting</div>
+            <div class="sidebar-item">Expenses</div>
+            <div class="sidebar-item">Team</div>
+            <div class="sidebar-item">Reports</div>
+          </div>
+          <div class="mockup-main">
+            <div class="mockup-toprow">
+              <div>
+                <div class="mockup-title">Overview</div>
+                <div class="mockup-subtitle">September 2026</div>
+              </div>
+              <div class="org-badge">Acme Corp</div>
+            </div>
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-label">Revenue</div>
+                <div class="kpi-value">$84,210</div>
+                <div class="kpi-delta delta-up">+12.4%</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Orders</div>
+                <div class="kpi-value">1,248</div>
+                <div class="kpi-delta delta-up">+8.1%</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Low Stock</div>
+                <div class="kpi-value">14 SKUs</div>
+                <div class="kpi-delta delta-down">−3</div>
+              </div>
+            </div>
+            <div class="chart-box">
+              <div class="chart-label">Weekly Sales</div>
+              <div class="chart-bars" id="chartBars" aria-label="Weekly sales bar chart"></div>
+            </div>
+            <div class="orders-box">
+              <div class="orders-head">Recent Orders</div>
+              <div class="order-row">
+                <span class="order-id">ORD-4821</span>
+                <span class="order-name">Delta Supplies</span>
+                <span class="order-amt">$4,200</span>
+                <span class="badge badge-paid">Paid</span>
+              </div>
+              <div class="order-row">
+                <span class="order-id">ORD-4820</span>
+                <span class="order-name">Bright Goods Co.</span>
+                <span class="order-amt">$1,875</span>
+                <span class="badge badge-pending">Pending</span>
+              </div>
+              <div class="order-row">
+                <span class="order-id">ORD-4819</span>
+                <span class="order-name">Metro Wholesale</span>
+                <span class="order-amt">$9,140</span>
+                <span class="badge badge-paid">Paid</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── Social Proof ─────────────────────────────────────────────────────────── -->
+<section class="social-proof">
+  <p class="sp-label">One workspace for every operation</p>
+  <div class="sp-logos">
+    <span>Inventory</span>
+    <span>Purchasing</span>
+    <span>Sales</span>
+    <span>Expenses</span>
+    <span>Reporting</span>
+    <span>Team</span>
+  </div>
+</section>
+
+<!-- ─── Features ─────────────────────────────────────────────────────────────── -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-header">
+      <span class="eyebrow">Platform capabilities</span>
+      <h2 class="section-title">Everything your business needs,<br>none of what it doesn't.</h2>
+      <p class="section-sub">We built Nexus to replace the patchwork of tools most SMBs cobble together — spreadsheets, disconnected SaaS apps, and manual data entry.</p>
+    </div>
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <h3 class="feature-title">Multi-Tenant &amp; Team Ready</h3>
+        <p class="feature-body">Manage multiple organizations under one account with role-based access control and granular permissions per team.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>
+        </div>
+        <h3 class="feature-title">Real-Time Inventory</h3>
+        <p class="feature-body">Track stock levels, warehouse transfers, and purchase orders in real time — no manual reconciliation required.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <h3 class="feature-title">Built-In Accounting</h3>
+        <p class="feature-body">A full double-entry ledger, automated invoicing, and expense tracking — no separate accounting software needed.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        </div>
+        <h3 class="feature-title">Tenant-Level Security</h3>
+        <p class="feature-body">Tenant-scoped data access and role-based permissions help keep each organization's records separate and accessible to the right people.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── How It Works ──────────────────────────────────────────────────────────── -->
+<section class="how" id="how">
+  <div class="how-inner">
+
+    <div>
+      <span class="eyebrow how-eyebrow">Getting started</span>
+      <h2 class="how-title">A simpler way to manage<br>day-to-day operations.</h2>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-track">
+            <div class="step-num">01</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <h3 class="step-title">Create your organization</h3>
+            <p class="step-body">Sign up and set up your first organization in minutes. Add your company details, base currency, and timezone.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-track">
+            <div class="step-num">02</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <h3 class="step-title">Invite your team</h3>
+            <p class="step-body">Add teammates with specific roles — admins, managers, or viewers — so everyone sees only what they need.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-track">
+            <div class="step-num">03</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <h3 class="step-title">Start managing operations</h3>
+            <p class="step-body">Add products, create purchase orders, issue invoices, and track every transaction from a single dashboard.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="team-panel">
+      <div class="team-panel-bg" aria-hidden="true"></div>
+      <div class="team-card">
+        <div class="team-card-header">
+          <span class="team-card-title">Organization Settings</span>
+          <div class="team-org">
+            <div class="org-av">A</div>
+            <span class="org-name">Acme Corp</span>
+          </div>
+        </div>
+        <div class="team-card-body">
+          <div class="team-section-lbl">Team Members</div>
+          <div class="member-row">
+            <div class="member-av" style="background:#7c3aed">JL</div>
+            <span class="member-name">Jordan Lee</span>
+            <span class="role-badge role-admin">Admin</span>
+          </div>
+          <div class="member-row">
+            <div class="member-av" style="background:#059669">MS</div>
+            <span class="member-name">Maria Santos</span>
+            <span class="role-badge role-manager">Manager</span>
+          </div>
+          <div class="member-row">
+            <div class="member-av" style="background:#d97706">TF</div>
+            <span class="member-name">Tom Fischer</span>
+            <span class="role-badge role-viewer">Viewer</span>
+          </div>
+          <div class="member-row">
+            <div class="member-av" style="background:#0284c7">PN</div>
+            <span class="member-name">Priya Nair</span>
+            <span class="role-badge role-manager">Manager</span>
+          </div>
+          <div class="invite-btn" aria-hidden="true">+ Invite teammate</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── Pricing ───────────────────────────────────────────────────────────────── -->
+<section class="pricing" id="pricing">
+  <div class="container-md">
+    <div class="section-header">
+      <span class="eyebrow">Pricing</span>
+      <h2 class="section-title">Simple, transparent pricing.</h2>
+      <p class="section-sub">Start free, grow into the plan that fits your business.</p>
+    </div>
+
+    <div class="pricing-grid">
+
+      <!-- Free -->
+      <div class="plan-card plan-default">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">
+          <span class="plan-amount">$0</span>
+          <span class="plan-period">/forever</span>
+        </div>
+        <p class="plan-tagline">For solo operators getting started.</p>
+        <ul class="plan-features">
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>1 organization</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Up to 3 users</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Inventory tracking</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Basic invoicing</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Email support</span></li>
+        </ul>
+        <a class="btn btn-primary btn-block" href="/login.html?mode=register">Start for free</a>
+      </div>
+
+      <!-- Starter -->
+      <div class="plan-card plan-highlight">
+        <div class="plan-popular">Most popular</div>
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">
+          <span class="plan-amount">$49</span>
+          <span class="plan-period">/per month</span>
+        </div>
+        <p class="plan-tagline">For growing teams with real complexity.</p>
+        <ul class="plan-features">
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>3 organizations</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Up to 15 users</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Full accounting module</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Purchasing &amp; expenses</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Role-based access control</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Priority support</span></li>
+        </ul>
+        <a class="btn btn-white btn-block" href="/login.html?mode=register">Choose Starter</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="plan-card plan-default">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">
+          <span class="plan-amount">$129</span>
+          <span class="plan-period">/per month</span>
+        </div>
+        <p class="plan-tagline">For established businesses at scale.</p>
+        <ul class="plan-features">
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Unlimited organizations</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Unlimited users</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Advanced reporting &amp; exports</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>API access</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Custom roles &amp; permissions</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>Dedicated onboarding</span></li>
+          <li class="plan-feature"><span class="pf-check"><svg class="check-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5 8.5 6 12 13.5 4"/></svg></span><span>SLA-backed support</span></li>
+        </ul>
+        <a class="btn btn-primary btn-block" href="/login.html?mode=register">Choose Pro</a>
+      </div>
+
+    </div>
+    <p class="pricing-note">Create an organization to get started. You can invite your team as you grow.</p>
+  </div>
+</section>
+
+<!-- ─── Final CTA ─────────────────────────────────────────────────────────────── -->
+<section class="final-cta">
+  <div class="cta-dots" aria-hidden="true"></div>
+  <div class="cta-glow-tr" aria-hidden="true"></div>
+  <div class="cta-glow-bl" aria-hidden="true"></div>
+  <div class="cta-inner">
+    <h2 class="cta-title">Ready to simplify your operations?</h2>
+    <p class="cta-sub">Bring your day-to-day operations together with Nexus ERP.</p>
+    <div class="cta-btns">
+      <a class="btn btn-white btn-lg" href="/login.html?mode=register">
+        Get Started Free
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="8" x2="13" y2="8"/><polyline points="9 4 13 8 9 12"/></svg>
+      </a>
+      <a class="btn btn-outline-white btn-lg" href="#features">Explore features</a>
+    </div>
+    <p class="cta-note">No credit card required · Setup in minutes</p>
+  </div>
+</section>
+
+<!-- ─── Footer ────────────────────────────────────────────────────────────────── -->
+<footer id="about">
+  <div class="footer-inner">
+    <div>
+      <a href="#top" class="logo" aria-label="Nexus ERP home">
+        <div class="logo-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <rect x="2" y="2" width="6" height="6" rx="1.5" fill="white"/>
+            <rect x="10" y="2" width="6" height="6" rx="1.5" fill="white" fill-opacity=".6"/>
+            <rect x="2" y="10" width="6" height="6" rx="1.5" fill="white" fill-opacity=".6"/>
+            <rect x="10" y="10" width="6" height="6" rx="1.5" fill="white"/>
+          </svg>
+        </div>
+        <span class="logo-wordmark logo-wordmark-light">Nexus ERP</span>
+      </a>
+      <p class="footer-tagline">Inventory, purchasing, sales, and team operations in one workspace.</p>
+    </div>
+
+    <div>
+      <div class="footer-col-title">Product</div>
+      <ul class="footer-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#pricing">Plans</a></li>
+        <li><a href="#how">How it works</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="footer-col-title">Company</div>
+      <ul class="footer-links">
+        <li><a href="#about">About Nexus</a></li>
+        <li><a href="#features">For growing teams</a></li>
+        <li><a href="/login.html">Sign in</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="footer-col-title">Security</div>
+      <ul class="footer-links">
+        <li><span>Tenant data isolation</span></li>
+        <li><span>Role-based access</span></li>
+        <li><span>Secure sign in</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© 2026 Nexus ERP. All rights reserved.</p>
+    <p>Built for businesses that mean business.</p>
+  </div>
+</footer>
+
+<!-- ─── JavaScript ─────────────────────────────────────────────────────────────── -->
+  <script src="/js/landing.js" defer></script>
+
 </body>
 </html>

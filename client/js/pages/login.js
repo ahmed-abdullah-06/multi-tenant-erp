@@ -204,4 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
       submitBtn.textContent = isRegisterMode ? "Create Account & Org" : "Sign In";
     }
   });
+
+  if (new URLSearchParams(window.location.search).get("mode") === "register") {
+    toggleBtn.click();
+  }
 });
