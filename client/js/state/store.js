@@ -86,7 +86,6 @@ export const getAccess = () => {
       return { roleName: 'Guest', permissions: [] };
     }
     const access = JSON.parse(accessData);
-    console.log('Current user access:', access);
     return access;
   } catch (error) {
     console.error('Error parsing user_access:', error);
@@ -99,11 +98,9 @@ export const hasPermission = (requiredPermission) => {
   
   // Owner/Admin role bypasses all frontend UI checks
   if (access.roleName === 'Owner' || access.roleName === 'Admin') {
-    console.log(`User has ${access.roleName} role - granting ${requiredPermission}`);
     return true;
   }
   
   const hasIt = access.permissions && access.permissions.includes(requiredPermission);
-  console.log(`Permission check: ${requiredPermission} = ${hasIt}`, access.permissions);
   return hasIt;
 };

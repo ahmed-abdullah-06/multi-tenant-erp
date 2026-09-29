@@ -757,9 +757,14 @@ export const initDashboard = async () => {
   const access = getAccess();
   
   // Set visual role badge
-  document.getElementById('role-badge').innerText = `[ ACCESS LEVEL: ${access.roleName.toUpperCase()} ]`;
+  const roleBadge = document.getElementById('role-badge');
+  if (roleBadge) {
+    roleBadge.innerText = `[ ACCESS LEVEL: ${access.roleName.toUpperCase()} ]`;
+  }
   
   const grid = document.getElementById('dashboard-grid');
+  if (!grid) return;
+  
   grid.innerHTML = '';
 
   // 1. Admin/Owner Overview Widget
@@ -770,7 +775,9 @@ export const initDashboard = async () => {
         <div class="text-2xl text-white" id="metric-revenue">Loading...</div>
       </div>
     `;
-    fetchAdminMetrics();
+    if (typeof fetchAdminMetrics === 'function') {
+      fetchAdminMetrics();
+    }
   }
 
   // 2. Inventory Staff Widget
@@ -781,7 +788,9 @@ export const initDashboard = async () => {
         <ul id="widget-low-stock" class="space-y-2 text-sm text-gray-300"></ul>
       </div>
     `;
-    fetchLowStockWidget();
+    if (typeof fetchLowStockWidget === 'function') {
+      fetchLowStockWidget();
+    }
   }
 
   // 3. Sales Staff Widget

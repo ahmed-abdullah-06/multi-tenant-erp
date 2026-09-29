@@ -26,12 +26,8 @@ export function renderSidebar(activeTab = "dashboard") {
     if (!item.reqPerm) return true;
     
     // Check permission for other items
-    const hasPerm = hasPermission(item.reqPerm);
-    console.log(`Checking permission for ${item.label}: ${item.reqPerm} = ${hasPerm}`);
-    return hasPerm;
+    return hasPermission(item.reqPerm);
   });
-
-  console.log(`Rendering ${visibleItems.length} sidebar items out of ${menuConfig.length} total`);
 
   // Build sidebar HTML
   const menuItems = visibleItems.map(item => {

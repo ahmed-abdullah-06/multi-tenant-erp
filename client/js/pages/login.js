@@ -161,7 +161,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           if (res.data.access) {
             localStorage.setItem('user_access', JSON.stringify(res.data.access));
-            console.log('Stored user access:', res.data.access);
           }
           
           showAlert("Registration successful! Redirecting...", false);
@@ -189,7 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           if (res.data.access) {
             localStorage.setItem('user_access', JSON.stringify(res.data.access));
-            console.log('Stored user access:', res.data.access);
           }
           
           showAlert("Login successful! Redirecting...", false);
