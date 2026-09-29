@@ -37,6 +37,21 @@ export async function renderNavbar(user) {
     </header>
   `;
 
+  // Sidebar toggle logic
+  const sidebarToggleBtn = document.getElementById("sidebar-toggle-btn");
+  if (sidebarToggleBtn) {
+    sidebarToggleBtn.addEventListener("click", () => {
+      const authShell = document.querySelector(".auth-shell");
+      if (authShell) {
+        if (window.innerWidth <= 768) {
+          authShell.classList.toggle("sidebar-open");
+        } else {
+          authShell.classList.toggle("sidebar-collapsed");
+        }
+      }
+    });
+  }
+
   // Organization switcher logic
   const switcherBtn = document.getElementById("org-switcher-btn");
   const switcherMenu = document.getElementById("org-switcher-menu");

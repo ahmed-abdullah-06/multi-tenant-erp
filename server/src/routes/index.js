@@ -19,6 +19,7 @@ const accountingRoutes = require('../modules/accounting/accounting.routes');
 // Mount routes under /api/v1 prefix
 router.use('/auth', authRoutes);
 router.use('/organizations', organizationsRoutes);
+router.use('/organization', organizationsRoutes);
 router.use('/users', usersRoutes);
 router.use('/rbac', rbacRoutes);
 router.use('/employees', employeesRoutes);

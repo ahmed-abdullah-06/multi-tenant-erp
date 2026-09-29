@@ -31,8 +31,13 @@ const getCurrentOrganization = async (req, res, next) => {
 
 const updateCurrentOrganization = async (req, res, next) => {
     try {
-        const { name } = req.body;
-        const org = await organizationsService.updateOrganization(req.tenantId, { name });
+        const updateData = {};
+        if (req.body.name !== undefined) updateData.name = req.body.name;
+        if (req.body.currency !== undefined) updateData.currency = req.body.currency;
+        if (req.body.timezone !== undefined) updateData.timezone = req.body.timezone;
+        if (req.body.logoUrl !== undefined) updateData.logoUrl = req.body.logoUrl;
+
+        const org = await organizationsService.updateOrganization(req.tenantId, updateData);
         return successResponse(res, 200, 'Organization updated successfully', org);
     } catch (error) {
         next(error);

@@ -39,6 +39,10 @@ export function setState(updates) {
 export function setToken(token) {
   state.token = token;
   persistState();
+  if (token) {
+    localStorage.setItem('accessToken', token);
+    localStorage.setItem('auth_token', token);
+  }
 }
 
 /**
@@ -46,7 +50,7 @@ export function setToken(token) {
  */
 export function getToken() {
   state = loadState();
-  return state.token;
+  return state.token || localStorage.getItem('accessToken') || localStorage.getItem('auth_token');
 }
 
 /**
@@ -55,13 +59,17 @@ export function getToken() {
 export function setOrganizationId(organizationId) {
   state.organizationId = organizationId;
   persistState();
+  if (organizationId) {
+    localStorage.setItem('organizationId', organizationId);
+  }
 }
 
 /**
  * Get the active organization.
  */
 export function getOrganizationId() {
-  return state.organizationId;
+  state = loadState();
+  return state.organizationId || localStorage.getItem('organizationId');
 }
 
 /**
@@ -70,12 +78,27 @@ export function getOrganizationId() {
 export function clearState() {
   state = { token: null, organizationId: null };
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('organizationId');
+  localStorage.removeItem('user_data');
+  localStorage.removeItem('user_access');
 }
 
 export const login = (responseData) => {
-  localStorage.setItem('auth_token', responseData.token);
-  localStorage.setItem('user_data', JSON.stringify(responseData.user));
-  localStorage.setItem('user_access', JSON.stringify(responseData.access));
+  const token = responseData.accessToken || responseData.token;
+  if (token) {
+    setToken(token);
+  }
+  if (responseData.defaultOrganizationId || responseData.organization?.id) {
+    setOrganizationId(responseData.defaultOrganizationId || responseData.organization.id);
+  }
+  if (responseData.user) {
+    localStorage.setItem('user_data', JSON.stringify(responseData.user));
+  }
+  if (responseData.access) {
+    localStorage.setItem('user_access', JSON.stringify(responseData.access));
+  }
 };
 
 export const getAccess = () => {
@@ -94,6 +117,7 @@ export const getAccess = () => {
 };
 
 export const hasPermission = (requiredPermission) => {
+  if (!requiredPermission) return true;
   const access = getAccess();
   
   // Owner/Admin role bypasses all frontend UI checks
@@ -101,6 +125,26 @@ export const hasPermission = (requiredPermission) => {
     return true;
   }
   
-  const hasIt = access.permissions && access.permissions.includes(requiredPermission);
-  return hasIt;
+  if (!access.permissions || !Array.isArray(access.permissions)) {
+    return false;
+  }
+
+  if (access.permissions.includes('*')) {
+    return true;
+  }
+
+  if (access.permissions.includes(requiredPermission)) {
+    return true;
+  }
+
+  // Support inverted format e.g. 'read:accounting' vs 'accounting:read'
+  const parts = requiredPermission.split(':');
+  if (parts.length === 2) {
+    const inverted = `${parts[1]}:${parts[0]}`;
+    if (access.permissions.includes(inverted)) {
+      return true;
+    }
+  }
+
+  return false;
 };

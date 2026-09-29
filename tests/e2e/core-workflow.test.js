@@ -11,13 +11,52 @@ describe('E2E: Core ERP Business Workflow', () => {
     let customerId;
     let salesOrderId;
 
+    const cleanupTestData = async () => {
+        try {
+            const user = await prisma.user.findUnique({
+                where: { email: 'e2e@test.com' },
+                include: { memberships: true }
+            });
+            const orgIds = new Set();
+            if (user && user.memberships) {
+                user.memberships.forEach(m => orgIds.add(m.organizationId));
+            }
+            const orgsBySlug = await prisma.organization.findMany({ where: { slug: 'e2e-test-org' } });
+            orgsBySlug.forEach(o => orgIds.add(o.id));
+
+            for (const orgId of orgIds) {
+                await prisma.payment.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.invoice.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.salesOrderItem.deleteMany({ where: { salesOrder: { organizationId: orgId } } }).catch(() => {});
+                await prisma.salesOrder.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.customer.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.goodsReceipt.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.purchaseOrderItem.deleteMany({ where: { purchaseOrder: { organizationId: orgId } } }).catch(() => {});
+                await prisma.purchaseOrder.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.supplier.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.stockMovement.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.inventoryBalance.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.product.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.auditLog.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.rolePermission.deleteMany({ where: { role: { organizationId: orgId } } }).catch(() => {});
+                await prisma.membership.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.role.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+                await prisma.organization.deleteMany({ where: { id: orgId } }).catch(() => {});
+            }
+            await prisma.session.deleteMany({ where: { user: { email: 'e2e@test.com' } } }).catch(() => {});
+            await prisma.user.deleteMany({ where: { email: 'e2e@test.com' } }).catch(() => {});
+        } catch (err) {
+            console.warn('Cleanup warning:', err.message);
+        }
+    };
+
     // Clean up the database before running the E2E suite
     beforeAll(async () => {
-        await prisma.organization.deleteMany({ where: { slug: 'e2e-test-org' } });
-        await prisma.user.deleteMany({ where: { email: 'e2e@test.com' } });
+        await cleanupTestData();
     });
 
     afterAll(async () => {
+        await cleanupTestData();
         await prisma.$disconnect();
     });
 

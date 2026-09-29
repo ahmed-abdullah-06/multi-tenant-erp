@@ -8,10 +8,19 @@ const prisma = require('../../lib/prisma');
  */
 const verifyFeatureAccess = async (organizationId, featureKey) => {
     // 1. Fetch active subscription and associated plan
-    const subscription = await prisma.subscription.findUnique({
+    let subscription = await prisma.subscription.findUnique({
         where: { organizationId },
         include: { plan: true }
     });
+
+    if (!subscription) {
+        try {
+            const billingService = require('./billing.service');
+            subscription = await billingService.getSubscription(organizationId);
+        } catch (e) {
+            // Ignore if plan tables are not seeded
+        }
+    }
 
     if (!subscription || subscription.status !== 'ACTIVE') {
         return { allowed: false, reason: 'Active subscription required.' };

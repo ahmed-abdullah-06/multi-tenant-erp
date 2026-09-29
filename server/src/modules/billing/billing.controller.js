@@ -34,7 +34,7 @@ const updateSubscription = async (req, res, next) => {
 const createSubscriptionCheckout = async (req, res, next) => {
     try {
         const { planId, successUrl, cancelUrl } = req.body;
-        const organizationId = req.organizationId; // Provided by your auth middleware
+        const organizationId = req.organizationId || req.tenantId || req.headers['x-organization-id'];
 
         if (!planId || !successUrl || !cancelUrl) {
             return res.status(400).json({ error: 'Missing required checkout parameters' });

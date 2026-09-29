@@ -7,11 +7,18 @@ const requirePermission = (requiredAction) => {
         }
 
         try {
+            if (req.membership.role && (req.membership.role.name === 'Owner' || req.membership.role.name === 'Admin')) {
+                return next();
+            }
+
+            const parts = requiredAction.split(':');
+            const invertedAction = parts.length === 2 ? `${parts[1]}:${parts[0]}` : requiredAction;
+
             const hasPermission = await prisma.rolePermission.findFirst({
                 where: {
                     roleId: req.membership.roleId,
                     permission: {
-                        action: requiredAction
+                        action: { in: [requiredAction, invertedAction, '*'] }
                     }
                 }
             });

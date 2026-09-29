@@ -17,4 +17,7 @@ router.post('/', organizationsValidator.createOrganization, organizationsControl
 router.get('/current', resolveTenant, requirePermission('organizations:read'), organizationsController.getCurrentOrganization);
 router.patch('/current', resolveTenant, requirePermission('organizations:write'), organizationsValidator.updateOrganization, organizationsController.updateCurrentOrganization);
 
+router.get('/settings', resolveTenant, requirePermission('organizations:read'), organizationsController.getCurrentOrganization);
+router.patch('/settings', resolveTenant, requirePermission('organizations:write'), organizationsValidator.updateOrganization, organizationsController.updateCurrentOrganization);
+
 module.exports = router;

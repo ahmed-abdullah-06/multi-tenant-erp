@@ -143,6 +143,7 @@ const register = async ({ name, email, password }, ipAddress, userAgent) => {
     const permissions = roleWithPerms.permissions.map(rp => rp.permission.action);
 
     return {
+        token: accessToken,
         accessToken,
         refreshToken,
         user: {
@@ -212,6 +213,7 @@ const login = async ({ email, password }, ipAddress, userAgent) => {
     }
 
     return {
+        token: accessToken,
         accessToken,
         refreshToken,
         user: { id: user.id, name: user.name, email: user.email },
@@ -284,7 +286,11 @@ const getCurrentUser = async (userId) => {
                 include: {
                     organization: true,
                     role: {
-                        include: { permissions: true }
+                        include: {
+                            permissions: {
+                                include: { permission: true }
+                            }
+                        }
                     }
                 }
             }
@@ -314,8 +320,18 @@ const getCurrentUser = async (userId) => {
         }
     }
 
+    const activeMembership = user.memberships.find(m => m.organizationId === user.activeOrgId) || user.memberships[0];
+    const activeOrg = activeMembership ? activeMembership.organization : null;
+    const permissions = activeMembership?.role?.permissions
+        ? activeMembership.role.permissions.map(rp => rp.permission?.action || rp.action).filter(Boolean)
+        : [];
+
     const { passwordHash, ...safeUser } = user;
-    return safeUser;
+    return {
+        ...safeUser,
+        activeOrganization: activeOrg,
+        permissions
+    };
 };
 
 const forgotPassword = async (email, originUrl) => {

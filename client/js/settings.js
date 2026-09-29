@@ -1,14 +1,52 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // Retrieve the session token established during login
-    const token = localStorage.getItem('accessToken');
+    let token = localStorage.getItem('accessToken') || localStorage.getItem('auth_token');
+    let orgId = localStorage.getItem('organizationId');
+
+    if (!token || !orgId) {
+        try {
+            const rawSession = localStorage.getItem('erp_session');
+            if (rawSession) {
+                const session = JSON.parse(rawSession);
+                if (!token && session.token) token = session.token;
+                if (!orgId && session.organizationId) orgId = session.organizationId;
+            }
+        } catch (e) {
+            console.error('Failed to parse erp_session:', e);
+        }
+    }
+
+    if (token && !localStorage.getItem('accessToken')) {
+        localStorage.setItem('accessToken', token);
+    }
+
     if (!token) {
         window.location.href = '/login.html';
         return;
     }
 
+    // If orgId is missing, retrieve user's organizations
+    if (!orgId) {
+        try {
+            const orgsRes = await fetch('/api/v1/organizations/my', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (orgsRes.ok) {
+                const orgsData = await orgsRes.json();
+                const orgList = orgsData.data || [];
+                if (orgList.length > 0) {
+                    orgId = orgList[0].id;
+                    localStorage.setItem('organizationId', orgId);
+                }
+            }
+        } catch (e) {
+            console.warn('Could not fetch active organization:', e);
+        }
+    }
+
     const headers = {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(orgId ? { 'x-organization-id': orgId } : {})
     };
 
     // --- 1. Load Existing Organization Settings ---
@@ -16,10 +54,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         const response = await fetch('/api/v1/auth/me', { headers });
         const result = await response.json();
         
-        if (response.ok && result.data.activeOrganization) {
-            const org = result.data.activeOrganization;
-            document.getElementById('currency').value = org.currency || 'USD';
-            document.getElementById('timezone').value = org.timezone || 'UTC';
+        if (response.ok && result.data) {
+            let org = result.data.activeOrganization;
+            if (!org && result.data.memberships && result.data.memberships.length > 0) {
+                const activeMem = result.data.memberships.find(m => m.organizationId === orgId) || result.data.memberships[0];
+                org = activeMem.organization;
+            }
+            if (org) {
+                const currEl = document.getElementById('currency');
+                const tzEl = document.getElementById('timezone');
+                if (currEl && org.currency) currEl.value = org.currency;
+                if (tzEl && org.timezone) tzEl.value = org.timezone;
+            }
+        }
+
+        // Also check current subscription status
+        const statusEl = document.getElementById('current-status');
+        if (statusEl && orgId) {
+            try {
+                const subRes = await fetch('/api/v1/billing/subscription', { headers });
+                if (subRes.ok) {
+                    const subData = await subRes.json();
+                    statusEl.innerText = subData.data?.plan?.name || subData.data?.status || 'Active Plan';
+                } else {
+                    statusEl.innerText = 'Active (Default)';
+                }
+            } catch {
+                statusEl.innerText = 'Active';
+            }
         }
     } catch (error) {
         console.error('Failed to load profile:', error);
@@ -35,17 +97,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         try {
-            const response = await fetch('/api/v1/organization/settings', {
-                method: 'PATCH', // Assuming a PATCH endpoint exists for org updates
+            // Try current organization update endpoint first, then settings alias
+            let response = await fetch('/api/v1/organizations/current', {
+                method: 'PATCH',
                 headers,
                 body: JSON.stringify(payload)
             });
+
+            if (!response.ok && response.status === 404) {
+                response = await fetch('/api/v1/organization/settings', {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify(payload)
+                });
+            }
 
             if (response.ok) {
                 alert('Settings updated successfully.');
             } else {
                 const err = await response.json();
-                alert(`Error: ${err.error}`);
+                alert(`Error: ${err.error || 'Failed to update settings'}`);
             }
         } catch (error) {
             alert('A network error occurred while saving.');

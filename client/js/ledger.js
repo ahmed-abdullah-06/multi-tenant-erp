@@ -1,13 +1,52 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const token = localStorage.getItem('accessToken');
+    let token = localStorage.getItem('accessToken') || localStorage.getItem('auth_token');
+    let orgId = localStorage.getItem('organizationId');
+
+    if (!token || !orgId) {
+        try {
+            const rawSession = localStorage.getItem('erp_session');
+            if (rawSession) {
+                const session = JSON.parse(rawSession);
+                if (!token && session.token) token = session.token;
+                if (!orgId && session.organizationId) orgId = session.organizationId;
+            }
+        } catch (e) {
+            console.error('Failed to parse erp_session:', e);
+        }
+    }
+
+    if (token && !localStorage.getItem('accessToken')) {
+        localStorage.setItem('accessToken', token);
+    }
+
     if (!token) {
         window.location.href = '/login.html';
         return;
     }
 
+    // If orgId is still not found, fetch user's organizations
+    if (!orgId) {
+        try {
+            const orgsRes = await fetch('/api/v1/organizations/my', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (orgsRes.ok) {
+                const orgsData = await orgsRes.json();
+                const orgList = orgsData.data || [];
+                if (orgList.length > 0) {
+                    orgId = orgList[0].id;
+                    localStorage.setItem('organizationId', orgId);
+                }
+            }
+        } catch (e) {
+            console.warn('Could not fetch active organization:', e);
+        }
+    }
+
     const headers = {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(orgId ? { 'x-organization-id': orgId } : {})
     };
 
     const formatCurrency = (amount) => {

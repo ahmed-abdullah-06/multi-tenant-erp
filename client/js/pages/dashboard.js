@@ -61,6 +61,12 @@ async function renderView(viewName) {
       case "audit":
         await renderAuditView(container);
         break;
+      case "ledger":
+        window.location.href = "/ledger.html";
+        break;
+      case "settings":
+        window.location.href = "/settings.html";
+        break;
       default:
         container.innerHTML = `<h3>View not found</h3>`;
     }
