@@ -154,6 +154,16 @@ document.addEventListener("DOMContentLoaded", () => {
           if (res.data.organization) {
             setOrganizationId(res.data.organization.id);
           }
+          
+          // Store user data and access permissions
+          if (res.data.user) {
+            localStorage.setItem('user_data', JSON.stringify(res.data.user));
+          }
+          if (res.data.access) {
+            localStorage.setItem('user_access', JSON.stringify(res.data.access));
+            console.log('Stored user access:', res.data.access);
+          }
+          
           showAlert("Registration successful! Redirecting...", false);
           setTimeout(() => {
             window.location.href = "/dashboard.html";
@@ -172,6 +182,16 @@ document.addEventListener("DOMContentLoaded", () => {
           if (res.data.defaultOrganizationId) {
             setOrganizationId(res.data.defaultOrganizationId);
           }
+          
+          // Store user data and access permissions
+          if (res.data.user) {
+            localStorage.setItem('user_data', JSON.stringify(res.data.user));
+          }
+          if (res.data.access) {
+            localStorage.setItem('user_access', JSON.stringify(res.data.access));
+            console.log('Stored user access:', res.data.access);
+          }
+          
           showAlert("Login successful! Redirecting...", false);
           setTimeout(() => {
             window.location.href = "/dashboard.html";

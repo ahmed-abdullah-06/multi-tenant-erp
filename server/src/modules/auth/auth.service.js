@@ -70,18 +70,20 @@ const register = async ({ name, email, password }, ipAddress, userAgent) => {
         });
 
         const permissions = [
-            'users:read', 'users:write',
-            'organizations:read', 'organizations:write',
-            'rbac:read', 'rbac:write',
-            'employees:read', 'employees:write',
-            'inventory:read', 'inventory:write',
-            'purchasing:read', 'purchasing:write',
-            'sales:read', 'sales:write',
-            'expenses:read', 'expenses:write',
-            'reports:read',
-            'notifications:read', 'notifications:write',
-            'audit:read',
-            'billing:read', 'billing:write'
+            'read:users', 'write:users',
+            'read:organizations', 'write:organizations',
+            'read:rbac', 'write:rbac',
+            'read:employees', 'write:employees',
+            'read:inventory', 'write:inventory',
+            'read:purchasing', 'write:purchasing',
+            'read:sales', 'write:sales',
+            'read:expenses', 'write:expenses',
+            'read:reports',
+            'read:notifications', 'write:notifications',
+            'read:audit',
+            'read:billing', 'write:billing',
+            'read:accounting', 'write:accounting',
+            'manage:system'
         ];
 
         for (const action of permissions) {
@@ -126,6 +128,20 @@ const register = async ({ name, email, password }, ipAddress, userAgent) => {
 
     const { accessToken, refreshToken } = await generateSession(result.user.id, ipAddress, userAgent);
 
+    // Get role permissions for access object
+    const roleWithPerms = await prisma.role.findUnique({
+        where: { id: result.membership.roleId },
+        include: {
+            permissions: {
+                include: {
+                    permission: true
+                }
+            }
+        }
+    });
+
+    const permissions = roleWithPerms.permissions.map(rp => rp.permission.action);
+
     return {
         accessToken,
         refreshToken,
@@ -135,7 +151,12 @@ const register = async ({ name, email, password }, ipAddress, userAgent) => {
             email: result.user.email
         },
         organization: result.organization,
-        membership: result.membership
+        membership: result.membership,
+        access: {
+            roleId: result.membership.roleId,
+            roleName: roleWithPerms.name,
+            permissions: permissions
+        }
     };
 };
 
@@ -145,7 +166,18 @@ const login = async ({ email, password }, ipAddress, userAgent) => {
         include: {
             memberships: {
                 where: { status: 'ACTIVE' },
-                include: { organization: true, role: true }
+                include: { 
+                    organization: true, 
+                    role: {
+                        include: {
+                            permissions: {
+                                include: {
+                                    permission: true
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     });
@@ -161,6 +193,23 @@ const login = async ({ email, password }, ipAddress, userAgent) => {
 
     const { accessToken, refreshToken } = await generateSession(user.id, ipAddress, userAgent);
     const defaultOrg = user.memberships.length > 0 ? user.memberships[0].organization : null;
+    const defaultMembership = user.memberships.length > 0 ? user.memberships[0] : null;
+
+    // Extract permissions from the default organization's role
+    let access = {
+        roleId: null,
+        roleName: 'Guest',
+        permissions: []
+    };
+
+    if (defaultMembership) {
+        const permissions = defaultMembership.role.permissions.map(rp => rp.permission.action);
+        access = {
+            roleId: defaultMembership.roleId,
+            roleName: defaultMembership.role.name,
+            permissions: permissions
+        };
+    }
 
     return {
         accessToken,
@@ -172,7 +221,8 @@ const login = async ({ email, password }, ipAddress, userAgent) => {
             slug: m.organization.slug,
             role: m.role.name
         })),
-        defaultOrganizationId: defaultOrg ? defaultOrg.id : null
+        defaultOrganizationId: defaultOrg ? defaultOrg.id : null,
+        access: access
     };
 };
 

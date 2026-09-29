@@ -79,12 +79,31 @@ export const login = (responseData) => {
 };
 
 export const getAccess = () => {
-  return JSON.parse(localStorage.getItem('user_access')) || { roleName: 'Guest', permissions: [] };
+  try {
+    const accessData = localStorage.getItem('user_access');
+    if (!accessData) {
+      console.warn('No user_access found in localStorage');
+      return { roleName: 'Guest', permissions: [] };
+    }
+    const access = JSON.parse(accessData);
+    console.log('Current user access:', access);
+    return access;
+  } catch (error) {
+    console.error('Error parsing user_access:', error);
+    return { roleName: 'Guest', permissions: [] };
+  }
 };
 
 export const hasPermission = (requiredPermission) => {
   const access = getAccess();
+  
   // Owner/Admin role bypasses all frontend UI checks
-  if (access.roleName === 'Owner' || access.roleName === 'Admin') return true;
-  return access.permissions.includes(requiredPermission);
+  if (access.roleName === 'Owner' || access.roleName === 'Admin') {
+    console.log(`User has ${access.roleName} role - granting ${requiredPermission}`);
+    return true;
+  }
+  
+  const hasIt = access.permissions && access.permissions.includes(requiredPermission);
+  console.log(`Permission check: ${requiredPermission} = ${hasIt}`, access.permissions);
+  return hasIt;
 };
