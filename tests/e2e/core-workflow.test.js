@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../../server/src/app');
 const prisma = require('../../server/src/lib/prisma');
+const { redis } = require('../../server/src/middleware/idempotency');
 
 describe('E2E: Core ERP Business Workflow', () => {
     let token;
@@ -50,7 +51,6 @@ describe('E2E: Core ERP Business Workflow', () => {
         }
     };
 
-    // Clean up the database before running the E2E suite
     beforeAll(async () => {
         await cleanupTestData();
     });
@@ -58,6 +58,9 @@ describe('E2E: Core ERP Business Workflow', () => {
     afterAll(async () => {
         await cleanupTestData();
         await prisma.$disconnect();
+        if (redis) {
+            await redis.quit();
+        }
     });
 
     it('Step 1: Should register a new user and organization', async () => {
@@ -71,11 +74,10 @@ describe('E2E: Core ERP Business Workflow', () => {
 
         expect(res.status).toBe(201);
         expect(res.body.data).toHaveProperty('token');
-        
+
         token = res.body.data.token;
         tenantId = res.body.data.organization.id;
-        
-        // Update slug to ensure cleanup works next time
+
         await prisma.organization.update({
             where: { id: tenantId },
             data: { slug: 'e2e-test-org' }
@@ -98,16 +100,14 @@ describe('E2E: Core ERP Business Workflow', () => {
     });
 
     it('Step 3: Should create a supplier and purchase order', async () => {
-        // Create Supplier
         const supRes = await request(app)
             .post('/api/v1/purchasing/suppliers')
             .set('Authorization', `Bearer ${token}`)
             .set('x-organization-id', tenantId)
             .send({ name: 'E2E Supplier' });
-        
+
         supplierId = supRes.body.data.id;
 
-        // Create PO
         const poRes = await request(app)
             .post('/api/v1/purchasing/orders')
             .set('Authorization', `Bearer ${token}`)
@@ -130,26 +130,23 @@ describe('E2E: Core ERP Business Workflow', () => {
 
         expect(res.status).toBe(200);
 
-        // Verify stock increased
         const prodRes = await request(app)
             .get(`/api/v1/inventory/${productId}`)
             .set('Authorization', `Bearer ${token}`)
             .set('x-organization-id', tenantId);
-        
+
         expect(prodRes.body.data.stock).toBe(50);
     });
 
     it('Step 5: Should create customer and fulfill sales order', async () => {
-        // Create Customer
         const custRes = await request(app)
             .post('/api/v1/sales/customers')
             .set('Authorization', `Bearer ${token}`)
             .set('x-organization-id', tenantId)
             .send({ name: 'E2E Customer' });
-        
+
         customerId = custRes.body.data.id;
 
-        // Create SO
         const soRes = await request(app)
             .post('/api/v1/sales/orders')
             .set('Authorization', `Bearer ${token}`)
@@ -161,7 +158,6 @@ describe('E2E: Core ERP Business Workflow', () => {
 
         salesOrderId = soRes.body.data.id;
 
-        // Fulfill SO
         const fulfillRes = await request(app)
             .post(`/api/v1/sales/orders/${salesOrderId}/fulfill`)
             .set('Authorization', `Bearer ${token}`)
@@ -179,7 +175,6 @@ describe('E2E: Core ERP Business Workflow', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.data.sales.totalOrders).toBe(1);
-        // Stock started at 0, bought 50, sold 10 = 40 remaining
         expect(res.body.data.products.total).toBe(1);
     });
 });
