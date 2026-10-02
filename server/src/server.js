@@ -18,7 +18,7 @@ async function startServer() {
     logger.info('WebSocket server initialized and listening.');
 
     // 3. Start listening
-    server.listen(PORT, () => {
+    server.listen(PORT, '0.0.0.0', () => {
         logger.info(`Multi-Tenant ERP SaaS Server running on port ${PORT}`);
         logger.info(`API base URL at http://localhost:${PORT}/api/v1`);
         logger.info(`Swagger API docs at http://localhost:${PORT}/api-docs`);
