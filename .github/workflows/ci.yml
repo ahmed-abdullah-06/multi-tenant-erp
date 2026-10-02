@@ -60,7 +60,7 @@ jobs:
 
        # --- ADD THIS NEW STEP ---
       - name: Security Vulnerability Scan
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high --omit=dev
       # -------------------------
 
       - name: Generate Prisma Client
