@@ -13,11 +13,13 @@ router.use(requireAuth);
 router.get('/plans', billingController.getPlans);
 
 // Standard API route for generating the checkout session
-router.post('/checkout', requireAuth,billingValidator.createSubscriptionCheckout, billingController.createSubscriptionCheckout);
+router.post('/checkout', billingValidator.createSubscriptionCheckout, billingController.createSubscriptionCheckout);
 
-// Subscription requires tenant context
-router.get('/subscription', resolveTenant, requirePermission('billing:read'),billingValidator.updateSubscription, billingController.getSubscription);
-router.post('/subscription', resolveTenant, requirePermission('billing:write'),billingValidator.updateSubscription, billingController.updateSubscription);
+// Subscription requires tenant context (Validator removed from GET)
+router.get('/subscription', resolveTenant, requirePermission('billing:read'), billingController.getSubscription);
+
+// Update subscription (Validator kept for POST)
+router.post('/subscription', resolveTenant, requirePermission('billing:write'), billingValidator.updateSubscription, billingController.updateSubscription);
 
 // Webhook route - CRITICAL: Must use express.raw() to bypass the global express.json() parser
 router.post(
