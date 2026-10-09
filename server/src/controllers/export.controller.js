@@ -1,8 +1,6 @@
 // server/controllers/export.controller.js
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { stringify } = require('csv-stringify/sync');
-
-const prisma = new PrismaClient();
 
 const exportInventoryCsv = async (req, res) => {
   try {

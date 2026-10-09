@@ -1,9 +1,8 @@
 // services/webhook.service.js
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const axios = require('axios');
 const logger = require('../lib/logger');
 
-const prisma = new PrismaClient();
 
 // 1. Function to queue the webhook
 const dispatchWebhook = async (organizationId, eventType, payload) => {

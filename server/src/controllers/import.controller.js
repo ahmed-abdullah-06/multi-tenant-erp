@@ -1,9 +1,8 @@
 // server/controllers/import.controller.js
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { parse } = require('csv-parse');
 const fs = require('fs');
 
-const prisma = new PrismaClient();
 
 // Note: Ensure a multer middleware like upload.single('file') runs before this
 const importInventoryCsv = (req, res) => {

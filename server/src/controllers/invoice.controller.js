@@ -1,7 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { generateInvoicePdf } = require('../services/pdf.service');
 
-const prisma = new PrismaClient();
 
 const downloadInvoice = async (req, res) => {
   try {

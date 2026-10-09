@@ -1,7 +1,5 @@
 const crypto = require('crypto');
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 const generateApiKey = async (organizationId, name) => {
   // Generate a secure 64-character random string with a prefix
