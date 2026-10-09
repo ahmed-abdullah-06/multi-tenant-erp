@@ -5,6 +5,7 @@ const webhookHandler = require('./billing.webhook');
 const { requireAuth } = require('../../middleware/authMiddleware');
 const { resolveTenant } = require('../../middleware/tenantResolver');
 const { requirePermission } = require('../../middleware/rbacMiddleware');
+const billingValidator = require('./billing.validator');
 
 router.use(requireAuth);
 
@@ -12,11 +13,11 @@ router.use(requireAuth);
 router.get('/plans', billingController.getPlans);
 
 // Standard API route for generating the checkout session
-router.post('/checkout', requireAuth, billingController.createSubscriptionCheckout);
+router.post('/checkout', requireAuth,billingValidator.createSubscriptionCheckout, billingController.createSubscriptionCheckout);
 
 // Subscription requires tenant context
-router.get('/subscription', resolveTenant, requirePermission('billing:read'), billingController.getSubscription);
-router.post('/subscription', resolveTenant, requirePermission('billing:write'), billingController.updateSubscription);
+router.get('/subscription', resolveTenant, requirePermission('billing:read'),billingValidator.updateSubscription, billingController.getSubscription);
+router.post('/subscription', resolveTenant, requirePermission('billing:write'),billingValidator.updateSubscription, billingController.updateSubscription);
 
 // Webhook route - CRITICAL: Must use express.raw() to bypass the global express.json() parser
 router.post(
