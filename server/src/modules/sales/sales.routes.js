@@ -6,6 +6,7 @@ const { requireAuth } = require('../../middleware/authMiddleware');
 const { resolveTenant } = require('../../middleware/tenantResolver');
 const { requirePermission } = require('../../middleware/rbacMiddleware');
 const { requireIdempotency } = require('../../middleware/idempotency');
+const invoiceController = require('../../controllers/invoice.controller');
 
 router.use(requireAuth);
 router.use(resolveTenant);
@@ -32,5 +33,11 @@ router.patch('/orders/:id/cancel', requirePermission('sales:write'), salesContro
 router.get('/invoices', requirePermission('sales:read'), salesController.getInvoices);
 router.get('/invoices/:id', requirePermission('sales:read'), salesController.getInvoiceById);
 router.post('/invoices/:id/payments', requirePermission('sales:write'), requireIdempotency, salesValidator.recordPayment, salesController.recordPayment);
+// Invoice PDF Generation
+router.get(
+    '/invoices/:id/pdf', 
+    requirePermission('sales:read'), 
+    invoiceController.generateInvoicePdf || invoiceController.generatePdf
+);
 
 module.exports = router;

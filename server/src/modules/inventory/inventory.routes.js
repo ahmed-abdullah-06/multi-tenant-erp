@@ -8,6 +8,8 @@ const { requireAuth } = require('../../middleware/authMiddleware');
 const { resolveTenant } = require('../../middleware/tenantResolver');
 const { requirePermission } = require('../../middleware/rbacMiddleware');
 const { requirePlanFeature } = require('../../middleware/planGuard');
+const exportController = require('../../controllers/export.controller');
+const importController = require('../../controllers/import.controller');
 
 // Apply base authentication and tenant resolution to all routes in this module
 router.use(requireAuth);
@@ -62,6 +64,19 @@ router.patch(
     requirePermission('inventory:write'), 
     inventoryValidator.adjustStockSafely,
     inventoryController.adjustStockSafely
+);
+
+// Bulk Import & Export
+router.get(
+    '/export', 
+    requirePermission('inventory:read'), 
+    exportController.exportInventoryCsv || exportController.exportCsv 
+);
+
+router.post(
+    '/import', 
+    requirePermission('inventory:write'), 
+    importController.importInventoryCsv || importController.importData
 );
 
 module.exports = router;
