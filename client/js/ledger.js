@@ -1,53 +1,11 @@
+import { apiClient } from './apiClient.js';
+import { store } from './store.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
-    let token = localStorage.getItem('accessToken') || localStorage.getItem('auth_token');
-    let orgId = localStorage.getItem('organizationId');
-
-    if (!token || !orgId) {
-        try {
-            const rawSession = localStorage.getItem('erp_session');
-            if (rawSession) {
-                const session = JSON.parse(rawSession);
-                if (!token && session.token) token = session.token;
-                if (!orgId && session.organizationId) orgId = session.organizationId;
-            }
-        } catch (e) {
-            console.error('Failed to parse erp_session:', e);
-        }
-    }
-
-    if (token && !localStorage.getItem('accessToken')) {
-        localStorage.setItem('accessToken', token);
-    }
-
-    if (!token) {
+    if (!store.isAuthenticated()) {
         window.location.href = '/login.html';
         return;
     }
-
-    // If orgId is still not found, fetch user's organizations
-    if (!orgId) {
-        try {
-            const orgsRes = await fetch('/api/v1/organizations/my', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (orgsRes.ok) {
-                const orgsData = await orgsRes.json();
-                const orgList = orgsData.data || [];
-                if (orgList.length > 0) {
-                    orgId = orgList[0].id;
-                    localStorage.setItem('organizationId', orgId);
-                }
-            }
-        } catch (e) {
-            console.warn('Could not fetch active organization:', e);
-        }
-    }
-
-    const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...(orgId ? { 'x-organization-id': orgId } : {})
-    };
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-US', { 
@@ -60,15 +18,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- 1. Load Trial Balance ---
     const loadTrialBalance = async () => {
         try {
-            // Assumes you mounted the ledger.service.js to this route in your accounting.routes.js
-            const response = await fetch('/api/v1/accounting/trial-balance', { headers });
+            const response = await apiClient.get('/api/v1/accounting/trial-balance');
             const result = await response.json();
 
             if (!response.ok) throw new Error(result.error || 'Failed to load trial balance');
 
             const { accounts, totalDebits, totalCredits, isBalanced } = result.data;
 
-            // Update Header Stats
             document.getElementById('total-debits').innerText = formatCurrency(totalDebits);
             document.getElementById('total-credits').innerText = formatCurrency(totalCredits);
 
@@ -81,7 +37,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 statusBadge.className = 'status-indicator status-unbalanced';
             }
 
-            // Populate Table
             const tbody = document.getElementById('trial-balance-body');
             tbody.innerHTML = '';
 
@@ -111,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- 2. Load Recent Journal Entries ---
     const loadJournalEntries = async () => {
         try {
-            const response = await fetch('/api/v1/accounting/journal-entries?limit=10', { headers });
+            const response = await apiClient.get('/api/v1/accounting/journal-entries?limit=10');
             const result = await response.json();
 
             if (!response.ok) throw new Error(result.error || 'Failed to load journal entries');
@@ -126,7 +81,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             result.data.forEach(entry => {
                 const dateStr = new Date(entry.date).toLocaleDateString();
-                // Calculate the total financial impact (sum of all debits on this entry)
                 const impact = entry.lines.reduce((sum, line) => sum + parseFloat(line.debit || 0), 0);
                 
                 const tr = document.createElement('tr');
@@ -144,11 +98,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Initialize Dashboard
     loadTrialBalance();
     loadJournalEntries();
 
-    // Button Listener stub
     document.getElementById('btn-new-entry').addEventListener('click', () => {
         alert('This would open a modal to manually debit/credit accounts. In an ERP, most journal entries are generated automatically by the Purchasing and Sales modules.');
     });

@@ -1,56 +1,19 @@
+import { apiClient } from './apiClient.js';
+import { store } from './store.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
-    let token = localStorage.getItem('accessToken') || localStorage.getItem('auth_token');
-    let orgId = localStorage.getItem('organizationId');
-
-    if (!token || !orgId) {
-        try {
-            const rawSession = localStorage.getItem('erp_session');
-            if (rawSession) {
-                const session = JSON.parse(rawSession);
-                if (!token && session.token) token = session.token;
-                if (!orgId && session.organizationId) orgId = session.organizationId;
-            }
-        } catch (e) {}
-    }
-
-    if (token && !localStorage.getItem('accessToken')) {
-        localStorage.setItem('accessToken', token);
-    }
-
-    if (!token) {
+    // Centralized auth check
+    if (!store.isAuthenticated()) {
         window.location.href = '/login.html';
         return;
     }
-
-    if (!orgId) {
-        try {
-            const orgsRes = await fetch('/api/v1/organizations/my', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (orgsRes.ok) {
-                const orgsData = await orgsRes.json();
-                const orgList = orgsData.data || [];
-                if (orgList.length > 0) {
-                    orgId = orgList[0].id;
-                    localStorage.setItem('organizationId', orgId);
-                }
-            }
-        } catch (e) {}
-    }
-
-    const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...(orgId ? { 'x-organization-id': orgId } : {})
-    };
 
     const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
     // --- 1. Load Inventory Data ---
     const loadInventory = async () => {
         try {
-            // Assuming your GET /api/v1/inventory endpoint includes the inventoryBalances array
-            const response = await fetch('/api/v1/inventory', { headers });
+            const response = await apiClient.get('/api/v1/inventory');
             const result = await response.json();
 
             const tbody = document.getElementById('inventory-body');
@@ -64,7 +27,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             result.data.forEach(product => {
-                // Get the primary balance record (for simplicity, we grab the first warehouse balance)
                 const balance = product.inventoryBalances && product.inventoryBalances.length > 0 
                     ? product.inventoryBalances[0] 
                     : { id: null, quantity: 0, version: 1 };
@@ -91,7 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tbody.appendChild(tr);
             });
 
-            // Re-trigger RBAC to hide the action column for read-only users
             document.dispatchEvent(new Event('DOMContentLoaded'));
             attachAdjustmentListeners();
 
@@ -135,19 +96,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const quantityChange = parseInt(document.getElementById('modal-qty-change').value, 10);
 
         try {
-            const response = await fetch(`/api/v1/inventory/balances/${balanceId}/stock-safe`, {
-                method: 'PATCH',
-                headers,
-                body: JSON.stringify({ currentVersion, quantityChange })
+            const response = await apiClient.patch(`/api/v1/inventory/balances/${balanceId}/stock-safe`, {
+                currentVersion, 
+                quantityChange
             });
 
             const result = await response.json();
 
             if (response.ok) {
                 modal.style.display = 'none';
-                loadInventory(); // Reload to get the new version and quantities
+                loadInventory(); 
             } else if (response.status === 409) {
-                // Optimistic Locking Failure caught!
                 alert('Conflict Detected: Another user updated this stock a moment ago. The data has been refreshed. Please try again.');
                 modal.style.display = 'none';
                 loadInventory();
@@ -159,6 +118,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Initialize
     loadInventory();
 });
