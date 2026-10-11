@@ -37,7 +37,7 @@ router.post('/invoices/:id/payments', requirePermission('sales:write'), requireI
 router.get(
     '/invoices/:id/pdf', 
     requirePermission('sales:read'), 
-    invoiceController.generateInvoicePdf || invoiceController.generatePdf
+    invoiceController.downloadInvoice
 );
 
 module.exports = router;
