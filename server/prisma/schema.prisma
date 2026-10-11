@@ -348,6 +348,7 @@ model InventoryBalance {
   reserved       Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  version        Int      @default(1) // <-- Add this line
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
