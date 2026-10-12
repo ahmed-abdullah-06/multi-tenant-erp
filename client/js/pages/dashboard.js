@@ -144,7 +144,7 @@ async function renderInventoryView(container) {
     </div>
 
     <div class="data-card">
-      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <div class="data-table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
@@ -558,7 +558,7 @@ async function renderExpensesView(container) {
     </div>
 
     <div class="data-card">
-      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <div class="data-table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
@@ -631,7 +631,7 @@ async function renderEmployeesView(container) {
     </div>
 
     <div class="data-card">
-      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <div class="data-table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
@@ -729,7 +729,7 @@ async function renderAuditView(container) {
     </div>
 
     <div class="data-card">
-      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <div class="data-table-wrapper">
         <table class="data-table">
           <thead>
             <tr>

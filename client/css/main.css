@@ -808,7 +808,7 @@ a {
 
 @media (max-width: 767px) {
   .data-table-wrapper::after {
-    content: '← Scroll →';
+    content: '< Scroll >';
     display: block;
     text-align: center;
     font-size: 0.75rem;
