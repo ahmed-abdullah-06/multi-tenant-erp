@@ -83,6 +83,41 @@
         label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.85rem; }
         input { width: 100%; padding: 10px; background: #0b0b10; border: 1px solid var(--border-color); color: white; border-radius: 4px; box-sizing: border-box; }
         input:focus { outline: none; border-color: var(--accent-red); }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                overflow-y: auto;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 15px;
+            }
+            .main-content {
+                padding: 20px;
+                overflow-x: hidden;
+            }
+            .header-flex {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .btn-primary {
+                width: 100%;
+            }
+            table {
+                font-size: 0.85rem;
+            }
+            th, td {
+                padding: 8px 6px;
+            }
+            .glass-panel {
+                overflow-x: auto;
+            }
+        }
     </style>
 </head>
 <body>
@@ -104,21 +139,23 @@
         </div>
 
         <div class="glass-panel">
-            <table>
-                <thead>
-                    <tr>
-                        <th>SKU</th>
-                        <th>Product Name</th>
-                        <th>Price</th>
-                        <th class="text-right">Current Stock</th>
-                        <th class="text-right">Status</th>
-                        <th class="text-right" data-permission="inventory:write">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="inventory-body">
-                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading inventory...</td></tr>
-                </tbody>
-            </table>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Product Name</th>
+                            <th>Price</th>
+                            <th class="text-right">Current Stock</th>
+                            <th class="text-right">Status</th>
+                            <th class="text-right" data-permission="inventory:write">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-body">
+                        <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading inventory...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

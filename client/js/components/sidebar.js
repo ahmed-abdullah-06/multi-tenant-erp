@@ -55,4 +55,30 @@ export function renderSidebar(activeTab = "dashboard") {
       </nav>
     </aside>
   `;
+
+  // Auto-close sidebar on mobile when link is clicked
+  const sidebar = sidebarContainer.querySelector('.sidebar');
+  if (sidebar) {
+    sidebar.addEventListener('click', (e) => {
+      const link = e.target.closest('.sidebar__link');
+      if (link && window.innerWidth <= 768) {
+        const authShell = document.querySelector('.auth-shell');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        if (authShell) {
+          authShell.classList.remove('sidebar-open');
+        }
+        if (overlay) {
+          overlay.style.display = 'none';
+        }
+        document.body.style.overflow = '';
+        
+        // Update aria-expanded on toggle button
+        const toggleBtn = document.getElementById('sidebar-toggle-btn');
+        if (toggleBtn) {
+          toggleBtn.setAttribute('aria-expanded', 'false');
+        }
+      }
+    });
+  }
 }

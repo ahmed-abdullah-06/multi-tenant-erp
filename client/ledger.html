@@ -137,6 +137,41 @@
         }
         .status-balanced { background: rgba(0, 230, 118, 0.1); color: var(--success-green); border: 1px solid var(--success-green); }
         .status-unbalanced { background: rgba(211, 47, 47, 0.1); color: var(--accent-red); border: 1px solid var(--accent-red); }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                overflow-y: auto;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 15px;
+            }
+            .main-content {
+                padding: 20px;
+                overflow-x: hidden;
+            }
+            .header-flex {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            table {
+                font-size: 0.85rem;
+            }
+            th, td {
+                padding: 8px 6px;
+            }
+            .glass-panel {
+                overflow-x: auto;
+            }
+        }
     </style>
 </head>
 <body>
@@ -175,37 +210,41 @@
                 </div>
             </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Code</th>
-                        <th>Account Name</th>
-                        <th>Type</th>
-                        <th class="text-right">Debit</th>
-                        <th class="text-right">Credit</th>
-                    </tr>
-                </thead>
-                <tbody id="trial-balance-body">
-                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading accounts...</td></tr>
-                </tbody>
-            </table>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Account Name</th>
+                            <th>Type</th>
+                            <th class="text-right">Debit</th>
+                            <th class="text-right">Credit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trial-balance-body">
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading accounts...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="glass-panel">
             <h2>Recent Journal Entries</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Reference</th>
-                        <th>Description</th>
-                        <th class="text-right">Impact</th>
-                    </tr>
-                </thead>
-                <tbody id="journal-entries-body">
-                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Loading entries...</td></tr>
-                </tbody>
-            </table>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Reference</th>
+                            <th>Description</th>
+                            <th class="text-right">Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody id="journal-entries-body">
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Loading entries...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

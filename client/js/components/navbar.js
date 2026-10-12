@@ -8,7 +8,7 @@ export async function renderNavbar(user) {
   navbarContainer.innerHTML = `
     <header class="navbar">
       <div class="navbar__left">
-        <button id="sidebar-toggle-btn" class="sidebar-toggle" title="Toggle Navigation">☰</button>
+        <button id="sidebar-toggle-btn" class="sidebar-toggle" title="Toggle Navigation" aria-label="Toggle sidebar" aria-expanded="false">☰</button>
         <div class="organization-switcher">
           <button id="org-switcher-btn" class="organization-switcher__button">
             <span id="current-org-name">Loading organization...</span>
@@ -35,18 +35,45 @@ export async function renderNavbar(user) {
         </div>
       </div>
     </header>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
   `;
 
   // Sidebar toggle logic
   const sidebarToggleBtn = document.getElementById("sidebar-toggle-btn");
+  const sidebarOverlay = document.getElementById("sidebar-overlay");
+  
   if (sidebarToggleBtn) {
     sidebarToggleBtn.addEventListener("click", () => {
       const authShell = document.querySelector(".auth-shell");
       if (authShell) {
         if (window.innerWidth <= 768) {
-          authShell.classList.toggle("sidebar-open");
+          const isOpen = authShell.classList.toggle("sidebar-open");
+          sidebarToggleBtn.setAttribute("aria-expanded", String(isOpen));
+          
+          // Toggle overlay
+          if (sidebarOverlay) {
+            sidebarOverlay.style.display = isOpen ? 'block' : 'none';
+          }
+          
+          // Toggle body scroll lock
+          document.body.style.overflow = isOpen ? 'hidden' : '';
         } else {
           authShell.classList.toggle("sidebar-collapsed");
+        }
+      }
+    });
+  }
+
+  // Overlay click to close sidebar
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', () => {
+      const authShell = document.querySelector(".auth-shell");
+      if (authShell) {
+        authShell.classList.remove('sidebar-open');
+        sidebarOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+        if (sidebarToggleBtn) {
+          sidebarToggleBtn.setAttribute("aria-expanded", "false");
         }
       }
     });

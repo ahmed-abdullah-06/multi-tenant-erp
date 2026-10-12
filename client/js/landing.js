@@ -9,6 +9,7 @@ function closeMobileMenu() {
   menuButton.setAttribute("aria-expanded", "false");
   menuIcon.style.display = "block";
   closeIcon.style.display = "none";
+  document.body.style.overflow = '';
 }
 
 menuButton.addEventListener("click", () => {
@@ -16,6 +17,7 @@ menuButton.addEventListener("click", () => {
   menuButton.setAttribute("aria-expanded", String(isOpen));
   menuIcon.style.display = isOpen ? "none" : "block";
   closeIcon.style.display = isOpen ? "block" : "none";
+  document.body.style.overflow = isOpen ? 'hidden' : '';
 });
 
 mobileMenu.querySelectorAll("a").forEach((link) => {
@@ -33,6 +35,21 @@ window.addEventListener("resize", () => {
     closeMobileMenu();
   }
 });
+
+// Touch swipe to close mobile menu
+let touchStartX = 0;
+if (mobileMenu) {
+  mobileMenu.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+  
+  mobileMenu.addEventListener('touchend', (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    if (touchEndX - touchStartX > 100) {
+      closeMobileMenu();
+    }
+  });
+}
 
 const chart = document.getElementById("chartBars");
 const chartValues = [62, 45, 78, 55, 90, 70, 83];

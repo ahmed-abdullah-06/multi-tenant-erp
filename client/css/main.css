@@ -34,6 +34,11 @@
   /* Other */
   --border-radius: 8px;
   --transition: 0.2s ease;
+
+  /* Mobile & Touch */
+  --mobile-padding: 1rem;
+  --tablet-padding: 1.5rem;
+  --touch-target-min: 44px;
 }
 
 
@@ -78,6 +83,13 @@ button {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Touch targets */
+.form-input,
+.form-select,
+.btn {
+  min-height: var(--touch-target-min);
 }
 
 
@@ -130,6 +142,7 @@ a {
 
   transition:
     width var(--transition),
+    transform var(--transition),
     background-color var(--transition);
 }
 
@@ -436,6 +449,19 @@ a {
    RESPONSIVE / MOBILE
    ========================================= */
 
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  display: none;
+}
+
+.auth-shell.sidebar-open .sidebar-overlay {
+  display: block;
+}
+
 @media (max-width: 768px) {
 
   .auth-shell {
@@ -478,6 +504,19 @@ a {
 
   .organization-switcher__button {
     max-width: 180px;
+  }
+
+  .navbar__right {
+    gap: var(--space-sm);
+  }
+
+  #user-greeting {
+    font-size: 0.8rem !important;
+  }
+
+  .sidebar-toggle {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
   }
 }
 
@@ -749,4 +788,115 @@ a {
 .badge-success { background: #dcfce7; color: #15803d; }
 .badge-warning { background: #fef3c7; color: #b45309; }
 .badge-danger { background: #fee2e2; color: #b91c1c; }
-.badge-info { background: #e0f2fe; color: #0369a1; }
+.badge-info { background: #e0f2fe; color: #0369a1; }
+
+/* =========================================
+   RESPONSIVE TABLE WRAPPER
+   ========================================= */
+
+.data-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 767px) {
+  .data-table-wrapper::after {
+    content: '← Scroll →';
+    display: block;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    padding: 0.5rem;
+  }
+
+  .data-table {
+    font-size: 0.85rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.65rem 0.75rem;
+    white-space: nowrap;
+  }
+
+  .dashboard-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .auth-container {
+    padding: 1rem;
+  }
+
+  .auth-card {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .auth-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .form-input,
+  .form-select {
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+
+  .metric-card__value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .data-table-wrapper::after {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .data-card .btn {
+    width: 100%;
+  }
+}
+
+/* =========================================
+   RESPONSIVE UTILITIES
+   ========================================= */
+
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hide-mobile {
+    display: block;
+  }
+}
+
+.show-mobile {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .show-mobile {
+    display: none;
+  }
+}
+
+.hide-tablet {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .hide-tablet {
+    display: block;
+  }
+}
+
+/* Table responsive wrapper */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}

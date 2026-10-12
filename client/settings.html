@@ -57,6 +57,33 @@
             padding: 20px; border-radius: 8px; text-align: center;
         }
         .plan-card h3 { color: var(--accent-red); }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 15px;
+            }
+            .main-content {
+                padding: 20px;
+                overflow-y: auto;
+            }
+            .plan-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            input, select {
+                font-size: 16px; /* Prevent iOS zoom */
+            }
+            input, select, .btn-primary, .subscribe-btn {
+                min-height: 44px;
+            }
+        }
     </style>
 </head>
 <body>
