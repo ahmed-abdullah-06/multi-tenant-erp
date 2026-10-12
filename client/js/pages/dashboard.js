@@ -2,7 +2,6 @@ import { requireAuthGuard } from "../auth/authGuard.js";
 import apiClient from "../api/apiClient.js";
 import { renderSidebar } from "../components/sidebar.js";
 import { renderNavbar } from "../components/navbar.js";
-import { getOrganizationId } from "../state/store.js";
 import { getAccess, hasPermission } from '../state/store.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -62,10 +61,10 @@ async function renderView(viewName) {
         await renderAuditView(container);
         break;
       case "ledger":
-        window.location.href = "/ledger.html";
+        await renderLedgerView(container);
         break;
       case "settings":
-        window.location.href = "/settings.html";
+        await renderSettingsView(container);
         break;
       default:
         container.innerHTML = `<h3>View not found</h3>`;
@@ -758,6 +757,260 @@ async function renderAuditView(container) {
   `;
 }
 
+// ---------------- GENERAL LEDGER VIEW ----------------
+async function renderLedgerView(container) {
+  const formatCurrency = (amount) => new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount || 0);
+
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700;">General Ledger</h1>
+        <p style="color: #64748b;">Review account balances and recent journal entries</p>
+      </div>
+      <button class="btn btn-primary" id="btn-new-entry">+ New Journal Entry</button>
+    </div>
+
+    <section class="data-card">
+      <div class="data-card__header">
+        <span class="data-card__title">Trial Balance</span>
+        <span id="balance-status" class="badge badge-info">Loading balances...</span>
+      </div>
+      <div class="dashboard-metrics" style="padding: 1rem;">
+        <div class="metric-card">
+          <div class="metric-card__title">Total Debits</div>
+          <div class="metric-card__value" id="total-debits">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-card__title">Total Credits</div>
+          <div class="metric-card__value" id="total-credits">—</div>
+        </div>
+      </div>
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>Code</th><th>Account Name</th><th>Type</th><th>Debit</th><th>Credit</th></tr>
+          </thead>
+          <tbody id="trial-balance-body">
+            <tr><td colspan="5">Loading accounts...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="data-card">
+      <div class="data-card__header">
+        <span class="data-card__title">Recent Journal Entries</span>
+      </div>
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>Date</th><th>Reference</th><th>Description</th><th>Impact</th></tr>
+          </thead>
+          <tbody id="journal-entries-body">
+            <tr><td colspan="4">Loading entries...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  `;
+
+  container.querySelector("#btn-new-entry").addEventListener("click", () => {
+    alert("Journal entries are generated automatically from Purchasing and Sales. Contact your administrator to record a manual adjustment.");
+  });
+
+  const [balanceResult, entriesResult] = await Promise.all([
+    apiClient("/accounting/trial-balance"),
+    apiClient("/accounting/journal-entries?limit=10")
+  ]);
+  const balance = balanceResult.data || {};
+  const accounts = balance.accounts || [];
+  const entries = entriesResult.data || [];
+
+  container.querySelector("#total-debits").textContent = formatCurrency(balance.totalDebits);
+  container.querySelector("#total-credits").textContent = formatCurrency(balance.totalCredits);
+
+  const status = container.querySelector("#balance-status");
+  status.textContent = balance.isBalanced ? "Balanced" : "Unbalanced";
+  status.className = `badge ${balance.isBalanced ? "badge-success" : "badge-danger"}`;
+
+  const balanceBody = container.querySelector("#trial-balance-body");
+  balanceBody.innerHTML = accounts.length
+    ? accounts.map(account => `
+      <tr>
+        <td>${account.code}</td>
+        <td>${account.name}</td>
+        <td>${account.type}</td>
+        <td>${account.debit > 0 ? formatCurrency(account.debit) : "—"}</td>
+        <td>${account.credit > 0 ? formatCurrency(account.credit) : "—"}</td>
+      </tr>
+    `).join("")
+    : '<tr><td colspan="5">No accounts found.</td></tr>';
+
+  const entriesBody = container.querySelector("#journal-entries-body");
+  entriesBody.innerHTML = entries.length
+    ? entries.map(entry => {
+      const impact = (entry.lines || []).reduce((sum, line) => sum + Number(line.debit || 0), 0);
+      return `
+        <tr>
+          <td>${new Date(entry.date).toLocaleDateString()}</td>
+          <td>${entry.reference || "SYS-GEN"}</td>
+          <td>${entry.description}</td>
+          <td>${formatCurrency(impact)}</td>
+        </tr>
+      `;
+    }).join("")
+    : '<tr><td colspan="4">No recent journal entries.</td></tr>';
+}
+
+// ---------------- SETTINGS VIEW ----------------
+async function renderSettingsView(container) {
+  container.innerHTML = `
+    <div style="margin-bottom: 1.5rem;">
+      <h1 style="font-size: 1.75rem; font-weight: 700;">Organization Settings</h1>
+      <p style="color: #64748b;">Manage organization defaults and subscription details</p>
+    </div>
+
+    <section class="data-card">
+      <div class="data-card__header">
+        <span class="data-card__title">Localization &amp; Defaults</span>
+      </div>
+      <form id="settings-form" style="padding: 1.5rem; max-width: 640px;">
+        <div class="form-group">
+          <label class="form-label" for="currency">Base Currency</label>
+          <select class="form-select" id="currency" required>
+            <option value="USD">USD - US Dollar</option>
+            <option value="EUR">EUR - Euro</option>
+            <option value="GBP">GBP - British Pound</option>
+            <option value="PKR">PKR - Pakistani Rupee</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="timezone">Timezone</label>
+          <select class="form-select" id="timezone" required>
+            <option value="UTC">UTC</option>
+            <option value="America/New_York">Eastern Time (US)</option>
+            <option value="Asia/Karachi">Pakistan Standard Time</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+        <p id="settings-feedback" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="data-card">
+      <div class="data-card__header">
+        <span class="data-card__title">Subscription Plan</span>
+      </div>
+      <div style="padding: 1.5rem;">
+        <p style="margin-bottom: 1rem;">Current Status: <strong id="current-status">Loading...</strong></p>
+        <div class="dashboard-metrics">
+          <article class="metric-card">
+            <h2>Professional</h2>
+            <p>$49 / month</p>
+            <ul style="margin: 1rem 0 1rem 1.25rem;">
+              <li>Up to 10 Users</li>
+              <li>Standard Ledger</li>
+              <li>Email Support</li>
+            </ul>
+            <button class="btn btn-primary subscribe-btn" data-plan-id="plan_pro_123">Subscribe to Pro</button>
+          </article>
+          <article class="metric-card">
+            <h2>Enterprise</h2>
+            <p>$199 / month</p>
+            <ul style="margin: 1rem 0 1rem 1.25rem;">
+              <li>Unlimited Users</li>
+              <li>Advanced Idempotency API</li>
+              <li>24/7 Priority Support</li>
+            </ul>
+            <button class="btn btn-primary subscribe-btn" data-plan-id="plan_ent_456">Subscribe to Enterprise</button>
+          </article>
+        </div>
+      </div>
+    </section>
+  `;
+
+  const feedback = container.querySelector("#settings-feedback");
+  const form = container.querySelector("#settings-form");
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    feedback.textContent = "";
+    feedback.className = "";
+    try {
+      await apiClient("/organizations/current", {
+        method: "PATCH",
+        body: JSON.stringify({
+          currency: container.querySelector("#currency").value,
+          timezone: container.querySelector("#timezone").value
+        })
+      });
+      feedback.textContent = "Settings updated successfully.";
+      feedback.className = "alert-box alert-success";
+    } catch (error) {
+      feedback.textContent = `Unable to save settings: ${error.message}`;
+      feedback.className = "alert-box alert-error";
+      console.error("Failed to save organization settings:", error);
+    }
+    feedback.style.display = "block";
+  });
+
+  try {
+    const [organizationResult, subscriptionResult] = await Promise.allSettled([
+      apiClient("/organizations/current"),
+      apiClient("/billing/subscription")
+    ]);
+
+    if (organizationResult.status === "fulfilled") {
+      const organization = organizationResult.value.data;
+      if (organization?.currency) container.querySelector("#currency").value = organization.currency;
+      if (organization?.timezone) container.querySelector("#timezone").value = organization.timezone;
+    } else {
+      console.error("Failed to load organization settings:", organizationResult.reason);
+      feedback.textContent = "Unable to load organization settings.";
+      feedback.className = "alert-box alert-error";
+      feedback.style.display = "block";
+    }
+
+    const currentStatus = container.querySelector("#current-status");
+    if (subscriptionResult.status === "fulfilled") {
+      const subscription = subscriptionResult.value.data;
+      currentStatus.textContent = subscription?.plan?.name || subscription?.status || "Active Plan";
+    } else {
+      console.error("Failed to load subscription status:", subscriptionResult.reason);
+      currentStatus.textContent = "Unavailable";
+    }
+  } catch (error) {
+    console.error("Failed to load settings:", error);
+  }
+
+  container.querySelectorAll(".subscribe-btn").forEach(button => {
+    button.addEventListener("click", async () => {
+      const planId = button.dataset.planId;
+      button.disabled = true;
+      button.textContent = "Processing...";
+      try {
+        const checkout = await apiClient("/billing/checkout", {
+          method: "POST",
+          body: JSON.stringify({
+            planId,
+            successUrl: `${window.location.origin}/dashboard.html?checkout=success#settings`,
+            cancelUrl: `${window.location.origin}/dashboard.html?checkout=canceled#settings`
+          })
+        });
+        if (!checkout.data?.url) throw new Error("Checkout URL was not returned.");
+        window.location.href = checkout.data.url;
+      } catch (error) {
+        alert(`Checkout failed: ${error.message}`);
+        button.disabled = false;
+        button.textContent = planId === "plan_pro_123" ? "Subscribe to Pro" : "Subscribe to Enterprise";
+        console.error("Failed to start subscription checkout:", error);
+      }
+    });
+  });
+}
 
 export const initDashboard = async () => {
   const access = getAccess();

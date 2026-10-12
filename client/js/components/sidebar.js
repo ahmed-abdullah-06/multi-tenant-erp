@@ -9,8 +9,8 @@ const menuConfig = [
   { label: 'Employees', icon: '👥', path: '#employees', section: 'employees', reqPerm: 'read:employees' },
   { label: 'Reports', icon: '📈', path: '#reports', section: 'reports', reqPerm: 'read:reports' },
   { label: 'Audit Logs', icon: '🛡️', path: '#audit', section: 'audit', reqPerm: 'read:audit' },
-  { label: 'General Ledger', icon: '📒', path: '/ledger.html', section: 'ledger', reqPerm: 'read:accounting' },
-  { label: 'Settings', icon: '⚙️', path: '/settings.html', section: 'settings', reqPerm: 'manage:system' }
+  { label: 'General Ledger', icon: '📒', path: '#ledger', section: 'ledger', reqPerm: 'read:accounting' },
+  { label: 'Settings', icon: '⚙️', path: '#settings', section: 'settings', reqPerm: 'manage:system' }
 ];
 
 export function renderSidebar(activeTab = "dashboard") {
