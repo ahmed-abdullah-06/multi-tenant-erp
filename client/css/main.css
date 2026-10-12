@@ -497,6 +497,11 @@ a {
     transition: transform var(--transition);
   }
 
+  .sidebar__nav {
+    overflow-y: auto;
+    max-height: calc(100vh - 80px);
+  }
+
   .auth-shell.sidebar-open .sidebar {
     transform: translateX(0);
   }
