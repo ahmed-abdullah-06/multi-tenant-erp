@@ -61,7 +61,7 @@ export function renderSidebar(activeTab = "dashboard") {
   if (sidebar) {
     sidebar.addEventListener('click', (e) => {
       const link = e.target.closest('.sidebar__link');
-      if (link && window.innerWidth <= 768) {
+      if (link && window.innerWidth <= 767) {
         const authShell = document.querySelector('.auth-shell');
         const overlay = document.getElementById('sidebar-overlay');
         

@@ -46,7 +46,7 @@ export async function renderNavbar(user) {
     sidebarToggleBtn.addEventListener("click", () => {
       const authShell = document.querySelector(".auth-shell");
       if (authShell) {
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 767) {
           const isOpen = authShell.classList.toggle("sidebar-open");
           sidebarToggleBtn.setAttribute("aria-expanded", String(isOpen));
           

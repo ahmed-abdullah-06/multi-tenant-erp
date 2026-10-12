@@ -144,7 +144,7 @@ async function renderInventoryView(container) {
     </div>
 
     <div class="data-card">
-      <div class="data-table-wrapper">
+      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <table class="data-table">
           <thead>
             <tr>
@@ -252,7 +252,7 @@ async function renderPurchasingView(container) {
       <div class="data-card__header">
         <span class="data-card__title">Purchase Orders</span>
       </div>
-      <div class="data-table-wrapper">
+      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <table class="data-table">
           <thead>
             <tr>
@@ -381,7 +381,7 @@ async function renderSalesView(container) {
       <div class="data-card__header">
         <span class="data-card__title">Sales Orders</span>
       </div>
-      <div class="data-table-wrapper">
+      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <table class="data-table">
           <thead>
             <tr>
@@ -422,7 +422,7 @@ async function renderSalesView(container) {
       <div class="data-card__header">
         <span class="data-card__title">Invoices & Payments</span>
       </div>
-      <div class="data-table-wrapper">
+      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <table class="data-table">
           <thead>
             <tr>
@@ -558,7 +558,7 @@ async function renderExpensesView(container) {
     </div>
 
     <div class="data-card">
-      <div class="data-table-wrapper">
+      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <table class="data-table">
           <thead>
             <tr>
@@ -631,7 +631,7 @@ async function renderEmployeesView(container) {
     </div>
 
     <div class="data-card">
-      <div class="data-table-wrapper">
+      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <table class="data-table">
           <thead>
             <tr>
@@ -729,7 +729,7 @@ async function renderAuditView(container) {
     </div>
 
     <div class="data-card">
-      <div class="data-table-wrapper">
+      <div class="data-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <table class="data-table">
           <thead>
             <tr>
