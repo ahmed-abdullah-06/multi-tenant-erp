@@ -59,7 +59,7 @@
         .plan-card h3 { color: var(--accent-red); }
 
         /* Mobile responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 767px) {
             body {
                 flex-direction: column;
             }
@@ -78,10 +78,11 @@
                 gap: 1rem;
             }
             input, select {
-                font-size: 16px; /* Prevent iOS zoom */
+                font-size: 16px;
+                min-height: var(--touch-target-min, 44px);
             }
-            input, select, .btn-primary, .subscribe-btn {
-                min-height: 44px;
+            .btn-primary, .subscribe-btn {
+                min-height: var(--touch-target-min, 44px);
             }
         }
     </style>

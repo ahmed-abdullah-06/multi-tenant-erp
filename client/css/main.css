@@ -39,6 +39,13 @@
   --mobile-padding: 1rem;
   --tablet-padding: 1.5rem;
   --touch-target-min: 44px;
+
+  /* Z-index scale (lowest to highest):
+     - navbar: 10
+     - org-switcher dropdown: 20
+     - sidebar overlay: 99
+     - sidebar (mobile): 100
+     Keep future components within this scale to avoid layering conflicts */
 }
 
 
@@ -462,7 +469,7 @@ a {
   display: block;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
 
   .auth-shell {
     grid-template-columns: 1fr;

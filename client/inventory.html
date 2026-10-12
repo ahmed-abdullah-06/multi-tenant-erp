@@ -85,7 +85,7 @@
         input:focus { outline: none; border-color: var(--accent-red); }
 
         /* Mobile responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 767px) {
             body {
                 flex-direction: column;
                 overflow-y: auto;
@@ -117,6 +117,9 @@
             .glass-panel {
                 overflow-x: auto;
             }
+            input, select, .btn-primary {
+                min-height: var(--touch-target-min, 44px);
+            }
         }
     </style>
 </head>
@@ -139,7 +142,7 @@
         </div>
 
         <div class="glass-panel">
-            <div style="overflow-x: auto;">
+            <div class="data-table-wrapper" style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>

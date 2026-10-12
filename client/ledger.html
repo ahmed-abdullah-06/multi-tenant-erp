@@ -139,7 +139,7 @@
         .status-unbalanced { background: rgba(211, 47, 47, 0.1); color: var(--accent-red); border: 1px solid var(--accent-red); }
 
         /* Mobile responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 767px) {
             body {
                 flex-direction: column;
                 overflow-y: auto;
@@ -170,6 +170,10 @@
             }
             .glass-panel {
                 overflow-x: auto;
+            }
+            input, select {
+                font-size: 16px;
+                min-height: var(--touch-target-min, 44px);
             }
         }
     </style>
@@ -210,7 +214,7 @@
                 </div>
             </div>
 
-            <div style="overflow-x: auto;">
+            <div class="data-table-wrapper" style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
@@ -230,7 +234,7 @@
 
         <div class="glass-panel">
             <h2>Recent Journal Entries</h2>
-            <div style="overflow-x: auto;">
+            <div class="data-table-wrapper" style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
