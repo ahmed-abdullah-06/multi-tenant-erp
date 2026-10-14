@@ -32,5 +32,6 @@ router.use('/notifications', notificationsRoutes);
 router.use('/audit', auditRoutes);
 router.use('/billing', billingRoutes);
 router.use('/accounting', accountingRoutes);
+router.use('/v1/invitations', invitationRoutes)
 
 module.exports = router;
