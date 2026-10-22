@@ -117,5 +117,6 @@ if (Sentry) {
 
 // Your custom centralized error handler
 app.use(errorHandler);
+app.use('/uploads', express.static('uploads'));
 
 module.exports = app;
