@@ -15,6 +15,7 @@ const notificationsRoutes = require('../modules/notifications/notifications.rout
 const auditRoutes = require('../modules/audit/audit.routes');
 const billingRoutes = require('../modules/billing/billing.routes');
 const accountingRoutes = require('../modules/accounting/accounting.routes');
+const invitationRoutes = require('../modules/organization/invitation.routes');
 
 // Mount routes under /api/v1 prefix
 router.use('/auth', authRoutes);
@@ -32,6 +33,6 @@ router.use('/notifications', notificationsRoutes);
 router.use('/audit', auditRoutes);
 router.use('/billing', billingRoutes);
 router.use('/accounting', accountingRoutes);
-router.use('/v1/invitations', invitationRoutes)
+router.use('/invitations', invitationRoutes);
 
 module.exports = router;

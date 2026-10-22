@@ -70,12 +70,14 @@ const createQuote = async (req, res, next) => {
 };
 
 // Sales Orders
-const getSalesOrders = async (req, res, next) => {
+const getSalesOrders = async (req, res) => {
     try {
-        const orders = await salesService.getSalesOrders(req.tenantId);
-        return successResponse(res, 200, 'Sales orders retrieved', orders);
+        const organizationId = req.tenant.id;
+        // Pass req.query as the second argument
+        const orders = await salesService.getSalesOrders(organizationId, req.query);
+        res.status(200).json({ data: orders });
     } catch (error) {
-        next(error);
+        res.status(500).json({ error: error.message });
     }
 };
 

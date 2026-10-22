@@ -76,10 +76,46 @@ const createQuote = async (tenantId, { customerId, quoteNumber, validUntil, note
 };
 
 // Sales Orders
-const getSalesOrders = async (tenantId) => {
+const getSalesOrders = async (organizationId, { search, status, startDate, endDate, limit = 50, offset = 0 } = {}) => {
+    const whereClause = {
+        organizationId: organizationId
+    };
+
+    // Filter by exact status (e.g., PENDING, FULFILLED, CANCELLED)
+    if (status) {
+        whereClause.status = status;
+    }
+
+    // Filter by date range
+    if (startDate || endDate) {
+        whereClause.createdAt = {};
+        if (startDate) whereClause.createdAt.gte = new Date(startDate);
+        if (endDate) whereClause.createdAt.lte = new Date(endDate);
+    }
+
+    // Search by order reference OR customer name/email
+    if (search) {
+        whereClause.OR = [
+            { reference: { contains: search, mode: 'insensitive' } },
+            { 
+                customer: {
+                    OR: [
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { email: { contains: search, mode: 'insensitive' } }
+                    ]
+                } 
+            }
+        ];
+    }
+
     return await prisma.salesOrder.findMany({
-        where: { organizationId: tenantId },
-        include: { customer: true, items: { include: { product: true } }, invoices: true },
+        where: whereClause,
+        take: parseInt(limit, 10),
+        skip: parseInt(offset, 10),
+        include: {
+            customer: { select: { name: true, email: true } },
+            lines: true
+        },
         orderBy: { createdAt: 'desc' }
     });
 };

@@ -6,9 +6,37 @@ const createProduct = async (tenantId, productData) => {
     });
 };
 
-const getProducts = async (tenantId) => {
+const getProducts = async (organizationId, { search, categoryId, minPrice, maxPrice, limit = 50, offset = 0 } = {}) => {
+    // Build the dynamic where clause
+    const whereClause = {
+        organizationId: organizationId
+    };
+
+    // Text search on name or SKU
+    if (search) {
+        whereClause.OR = [
+            { name: { contains: search, mode: 'insensitive' } },
+            { sku: { contains: search, mode: 'insensitive' } }
+        ];
+    }
+
+    if (categoryId) whereClause.categoryId = categoryId;
+    
+    if (minPrice || maxPrice) {
+        whereClause.price = {};
+        if (minPrice) whereClause.price.gte = parseFloat(minPrice);
+        if (maxPrice) whereClause.price.lte = parseFloat(maxPrice);
+    }
+
     return await prisma.product.findMany({
-        where: { organizationId: tenantId }
+        where: whereClause,
+        take: parseInt(limit, 10),
+        skip: parseInt(offset, 10),
+        include: {
+            inventoryBalances: true,
+            category: true
+        },
+        orderBy: { createdAt: 'desc' }
     });
 };
 

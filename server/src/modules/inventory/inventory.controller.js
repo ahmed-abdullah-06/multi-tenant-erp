@@ -10,12 +10,14 @@ const createProduct = async (req, res, next) => {
     }
 };
 
-const getProducts = async (req, res, next) => {
+const getProducts = async (req, res) => {
     try {
-        const products = await inventoryService.getProducts(req.tenantId);
-        return successResponse(res, 200, 'Products retrieved successfully', products);
+        const organizationId = req.tenant.id;
+        // Pass req.query as the second argument
+        const products = await inventoryService.getProducts(organizationId, req.query);
+        res.status(200).json({ data: products });
     } catch (error) {
-        next(error);
+        res.status(500).json({ error: error.message });
     }
 };
 
