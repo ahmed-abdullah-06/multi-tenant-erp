@@ -1,5 +1,6 @@
 import { apiClient } from './apiClient.js';
 import { store } from './store.js';
+import { ui } from './ui.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Centralized auth check
@@ -107,14 +108,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 modal.style.display = 'none';
                 loadInventory(); 
             } else if (response.status === 409) {
-                alert('Conflict Detected: Another user updated this stock a moment ago. The data has been refreshed. Please try again.');
+                ui.showToast('Conflict Detected: Another user updated this stock a moment ago. The data has been refreshed. Please try again.', 'error');
                 modal.style.display = 'none';
                 loadInventory();
             } else {
-                alert(`Error: ${result.error}`);
+                ui.showToast(`Error: ${result.error}`, 'error');
             }
         } catch (error) {
-            alert('A network error occurred.');
+            ui.showToast('A network error occurred.', 'error');
         }
     });
 

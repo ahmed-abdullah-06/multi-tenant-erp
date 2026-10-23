@@ -1,5 +1,13 @@
 const prisma = require('../../lib/prisma');
 const crypto = require('crypto');
+const sendEmail = require('../../lib/email');
+
+const escapeHtml = (value) => String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 
 const getMembers = async (tenantId) => {
     return await prisma.membership.findMany({
@@ -83,7 +91,34 @@ const createInvitation = async (tenantId, invitedById, { email, roleId }) => {
             token,
             expiresAt
         },
-        include: { role: true }
+        include: {
+            role: true,
+            organization: { select: { name: true } },
+            invitedBy: { select: { name: true, email: true } }
+        }
+    });
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5000';
+    const invitationUrl = `${frontendUrl}/login.html?invitationToken=${encodeURIComponent(token)}`;
+    const organizationName = invitation.organization.name;
+    const inviterName = invitation.invitedBy.name || invitation.invitedBy.email;
+    const roleName = invitation.role?.name || 'member';
+
+    await sendEmail({
+        email: invitation.email,
+        subject: `You're invited to join ${organizationName}`,
+        message: [
+            `${inviterName} invited you to join ${organizationName} as a ${roleName}.`,
+            '',
+            `Sign in to accept the invitation: ${invitationUrl}`,
+            '',
+            'This invitation expires in 7 days.'
+        ].join('\n'),
+        html: `
+            <p>${escapeHtml(inviterName)} invited you to join <strong>${escapeHtml(organizationName)}</strong> as a ${escapeHtml(roleName)}.</p>
+            <p><a href="${escapeHtml(invitationUrl)}">Sign in to accept the invitation</a></p>
+            <p>This invitation expires in 7 days.</p>
+        `
     });
 
     return invitation;

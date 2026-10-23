@@ -1,6 +1,66 @@
 const prisma = require('../../lib/prisma');
 
-const getDashboardSummary = async (tenantId) => {
+const getReportDateRange = (startDate, endDate) => {
+    const end = endDate ? new Date(endDate) : new Date();
+    const start = startDate
+        ? new Date(startDate)
+        : new Date(end.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    if (endDate && /^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+        end.setUTCHours(23, 59, 59, 999);
+    }
+
+    return { start, end };
+};
+
+const getDashboardChartData = async (organizationId, startDate, endDate) => {
+    const range = { gte: startDate, lte: endDate };
+    const [invoices, expenses] = await Promise.all([
+        prisma.invoice.findMany({
+            where: {
+                organizationId,
+                status: 'PAID',
+                createdAt: range
+            },
+            select: { totalAmount: true, createdAt: true }
+        }),
+        prisma.expense.findMany({
+            where: {
+                organizationId,
+                expenseDate: range
+            },
+            select: { amount: true, category: { select: { name: true } } }
+        })
+    ]);
+
+    const revenueMap = {};
+    invoices.forEach((invoice) => {
+        const date = invoice.createdAt.toISOString().split('T')[0];
+        revenueMap[date] = (revenueMap[date] || 0) + invoice.totalAmount;
+    });
+
+    const expensesByCategory = new Map();
+    expenses.forEach((expense) => {
+        const category = expense.category?.name || 'Uncategorized';
+        expensesByCategory.set(
+            category,
+            (expensesByCategory.get(category) || 0) + expense.amount
+        );
+    });
+
+    return {
+        revenueData: Object.keys(revenueMap).sort().map((date) => ({
+            date,
+            amount: revenueMap[date]
+        })),
+        expenseCategories: Array.from(expensesByCategory, ([name, total]) => ({
+            name,
+            total
+        }))
+    };
+};
+
+const getDashboardSummary = async (organizationId, startDate, endDate) => {
     const [
         totalProducts,
         lowStockProducts,
@@ -11,33 +71,40 @@ const getDashboardSummary = async (tenantId) => {
         totalCustomers,
         totalEmployees
     ] = await Promise.all([
-        prisma.product.count({ where: { organizationId: tenantId } }),
+        prisma.product.count({ where: { organizationId } }),
         prisma.product.count({
             where: {
-                organizationId: tenantId,
+                organizationId,
                 stock: { lte: 10 }
             }
         }),
-        prisma.salesOrder.count({ where: { organizationId: tenantId } }),
+        prisma.salesOrder.count({ where: { organizationId } }),
         prisma.invoice.findMany({
-            where: { organizationId: tenantId },
+            where: { organizationId },
             select: { totalAmount: true, paidAmount: true, status: true }
         }),
         prisma.payment.aggregate({
-            where: { organizationId: tenantId },
+            where: { organizationId },
             _sum: { amount: true }
         }),
         prisma.expense.aggregate({
-            where: { organizationId: tenantId },
+            where: { organizationId },
             _sum: { amount: true }
         }),
-        prisma.customer.count({ where: { organizationId: tenantId } }),
-        prisma.employee.count({ where: { organizationId: tenantId } })
+        prisma.customer.count({ where: { organizationId } }),
+        prisma.employee.count({ where: { organizationId } })
     ]);
 
     const totalRevenue = paidInvoices._sum.amount || 0;
     const totalExpenseAmount = totalExpenses._sum.amount || 0;
     const netProfit = totalRevenue - totalExpenseAmount;
+
+    const reportRange = getReportDateRange(startDate, endDate);
+    const chartData = await getDashboardChartData(
+        organizationId,
+        reportRange.start,
+        reportRange.end
+    );
 
     return {
         products: {
@@ -61,7 +128,8 @@ const getDashboardSummary = async (tenantId) => {
         },
         employees: {
             total: totalEmployees
-        }
+        },
+        ...chartData
     };
 };
 

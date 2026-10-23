@@ -1,5 +1,6 @@
 import { apiClient } from './apiClient.js';
 import { store } from './store.js';
+import { ui } from './ui.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!store.isAuthenticated()) {
@@ -63,13 +64,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             if (response.ok) {
-                alert('Settings updated successfully.');
+                ui.showToast('Settings updated successfully.', 'success');
             } else {
                 const err = await response.json();
-                alert(`Error: ${err.error || 'Failed to update settings'}`);
+                ui.showToast(`Error: ${err.error || 'Failed to update settings'}`, 'error');
             }
         } catch (error) {
-            alert('A network error occurred while saving.');
+            ui.showToast('A network error occurred while saving.', 'error');
         }
     });
 
@@ -94,13 +95,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (response.ok && result.data.url) {
                     window.location.href = result.data.url;
                 } else {
-                    alert(`Checkout failed: ${result.error?.message || 'Unknown error'}`);
+                    ui.showToast(`Checkout failed: ${result.error?.message || 'Unknown error'}`, 'error');
                     e.target.innerText = 'Subscribe';
                     e.target.disabled = false;
                 }
             } catch (error) {
                 console.error('Checkout error:', error);
-                alert('Failed to initialize checkout.');
+                ui.showToast('Failed to initialize checkout.', 'error');
                 e.target.innerText = 'Subscribe';
                 e.target.disabled = false;
             }

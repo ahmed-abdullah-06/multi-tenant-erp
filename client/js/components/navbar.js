@@ -1,5 +1,6 @@
 import apiClient from "../api/apiClient.js";
 import { getOrganizationId, setOrganizationId, clearState } from "../state/store.js";
+import { ui } from "../ui.js";
 
 export async function renderNavbar(user) {
   const navbarContainer = document.getElementById("navbar-container");
@@ -103,7 +104,7 @@ export async function renderNavbar(user) {
   });
 
   createNewOrgBtn.addEventListener("click", async () => {
-    const orgName = prompt("Enter new organization name:");
+    const orgName = await ui.showPrompt("Enter new organization name:");
     if (orgName && orgName.trim()) {
       try {
         const res = await apiClient("/organizations", {
@@ -115,7 +116,7 @@ export async function renderNavbar(user) {
           window.location.reload();
         }
       } catch (err) {
-        alert(err.message || "Failed to create organization");
+        ui.showToast(err.message || "Failed to create organization", "error");
       }
     }
   });

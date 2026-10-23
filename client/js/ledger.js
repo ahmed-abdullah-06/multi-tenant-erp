@@ -1,5 +1,6 @@
 import { apiClient } from './apiClient.js';
 import { store } from './store.js';
+import { ui } from './ui.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!store.isAuthenticated()) {
@@ -102,6 +103,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadJournalEntries();
 
     document.getElementById('btn-new-entry').addEventListener('click', () => {
-        alert('This would open a modal to manually debit/credit accounts. In an ERP, most journal entries are generated automatically by the Purchasing and Sales modules.');
+        ui.showToast('This would open a modal to manually debit/credit accounts. In an ERP, most journal entries are generated automatically by the Purchasing and Sales modules.', 'info');
     });
 });

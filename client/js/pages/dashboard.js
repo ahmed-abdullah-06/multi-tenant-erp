@@ -3,6 +3,9 @@ import apiClient from "../api/apiClient.js";
 import { renderSidebar } from "../components/sidebar.js";
 import { renderNavbar } from "../components/navbar.js";
 import { getAccess, hasPermission } from '../state/store.js';
+import { ui } from "../ui.js";
+
+const dashboardCharts = {};
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!requireAuthGuard()) return;
@@ -125,7 +128,77 @@ async function renderDashboardOverview(container) {
         <a href="#expenses" class="btn btn-secondary">+ Record Expense</a>
       </div>
     </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+      <div class="data-card">
+        <div class="data-card__header">
+          <span class="data-card__title">Revenue Trend</span>
+        </div>
+        <div style="padding: 1.5rem; position: relative; height: 280px;">
+          <canvas id="revenueChart" aria-label="Revenue trend chart"></canvas>
+        </div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__header">
+          <span class="data-card__title">Expense Breakdown</span>
+        </div>
+        <div style="padding: 1.5rem; position: relative; height: 280px;">
+          <canvas id="expenseChart" aria-label="Expense breakdown chart"></canvas>
+        </div>
+      </div>
+    </div>
   `;
+
+  renderDashboardCharts(data);
+}
+
+function renderDashboardCharts(data) {
+  if (typeof window.Chart === "undefined") {
+    ui.showToast("Dashboard charts could not be loaded.", "error");
+    return;
+  }
+
+  Object.values(dashboardCharts).forEach((chart) => chart.destroy());
+
+  const revenueData = data.revenueData || [];
+  const expenseCategories = data.expenseCategories || [];
+  const revenueCanvas = document.getElementById("revenueChart");
+  const expenseCanvas = document.getElementById("expenseChart");
+
+  dashboardCharts.revenue = new window.Chart(revenueCanvas, {
+    type: "line",
+    data: {
+      labels: revenueData.map((item) => item.date),
+      datasets: [{
+        label: "Revenue",
+        data: revenueData.map((item) => item.amount),
+        borderColor: "#10b981",
+        backgroundColor: "rgba(16, 185, 129, 0.12)",
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  dashboardCharts.expense = new window.Chart(expenseCanvas, {
+    type: "doughnut",
+    data: {
+      labels: expenseCategories.map((item) => item.name),
+      datasets: [{
+        data: expenseCategories.map((item) => item.total),
+        backgroundColor: ["#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6", "#14b8a6", "#64748b"]
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true
+    }
+  });
 }
 
 // ---------------- INVENTORY VIEW ----------------
@@ -180,11 +253,11 @@ async function renderInventoryView(container) {
   `;
 
   document.getElementById("add-product-btn")?.addEventListener("click", async () => {
-    const name = prompt("Product Name:");
+    const name = await ui.showPrompt("Product Name:");
     if (!name) return;
-    const priceStr = prompt("Price (USD):", "19.99");
-    const stockStr = prompt("Initial Stock:", "25");
-    const sku = prompt("SKU code (optional):", "PRD-" + Math.floor(Math.random() * 9000 + 1000));
+    const priceStr = await ui.showPrompt("Price (USD):", "19.99");
+    const stockStr = await ui.showPrompt("Initial Stock:", "25");
+    const sku = await ui.showPrompt("SKU code (optional):", "PRD-" + Math.floor(Math.random() * 9000 + 1000));
 
     try {
       await apiClient("/inventory", {
@@ -198,18 +271,18 @@ async function renderInventoryView(container) {
       });
       renderInventoryView(container);
     } catch (err) {
-      alert(err.message || "Failed to create product");
+      ui.showToast(err.message || "Failed to create product", "error");
     }
   });
 
   container.querySelectorAll(".adjust-stock-btn").forEach(btn => {
     btn.addEventListener("click", async (e) => {
       const id = e.currentTarget.dataset.id;
-      const changeStr = prompt("Enter stock change amount (e.g. +10 or -5):");
+      const changeStr = await ui.showPrompt("Enter stock change amount (e.g. +10 or -5):");
       if (!changeStr) return;
       const quantityChange = parseInt(changeStr, 10);
       if (isNaN(quantityChange) || quantityChange === 0) {
-        alert("Invalid integer quantity change");
+        ui.showToast("Invalid integer quantity change", "error");
         return;
       }
       try {
@@ -219,7 +292,7 @@ async function renderInventoryView(container) {
         });
         renderInventoryView(container);
       } catch (err) {
-        alert(err.message || "Failed to adjust stock");
+        ui.showToast(err.message || "Failed to adjust stock", "error");
       }
     });
   });
@@ -290,9 +363,9 @@ async function renderPurchasingView(container) {
   `;
 
   document.getElementById("add-supplier-btn")?.addEventListener("click", async () => {
-    const name = prompt("Supplier Name:");
+    const name = await ui.showPrompt("Supplier Name:");
     if (!name) return;
-    const email = prompt("Supplier Email:");
+    const email = await ui.showPrompt("Supplier Email:");
     try {
       await apiClient("/purchasing/suppliers", {
         method: "POST",
@@ -300,25 +373,25 @@ async function renderPurchasingView(container) {
       });
       renderPurchasingView(container);
     } catch (err) {
-      alert(err.message || "Failed to create supplier");
+      ui.showToast(err.message || "Failed to create supplier", "error");
     }
   });
 
   document.getElementById("create-po-btn")?.addEventListener("click", async () => {
     if (suppliers.length === 0) {
-      alert("Please create at least one supplier first.");
+      ui.showToast("Please create at least one supplier first.", "error");
       return;
     }
     const productsRes = await apiClient("/inventory");
     const products = productsRes.data || [];
     if (products.length === 0) {
-      alert("Please add products to inventory before issuing a purchase order.");
+      ui.showToast("Please add products to inventory before issuing a purchase order.", "error");
       return;
     }
 
     const supplier = suppliers[0];
     const product = products[0];
-    const quantityStr = prompt(`Order quantity for ${product.name} (Supplier: ${supplier.name}):`, "50");
+    const quantityStr = await ui.showPrompt(`Order quantity for ${product.name} (Supplier: ${supplier.name}):`, "50");
     if (!quantityStr) return;
 
     try {
@@ -335,14 +408,14 @@ async function renderPurchasingView(container) {
       });
       renderPurchasingView(container);
     } catch (err) {
-      alert(err.message || "Failed to create PO");
+      ui.showToast(err.message || "Failed to create PO", "error");
     }
   });
 
   container.querySelectorAll(".receive-po-btn").forEach(btn => {
     btn.addEventListener("click", async (e) => {
       const id = e.currentTarget.dataset.id;
-      if (confirm("Receive this purchase order and increment stock levels?")) {
+      if (await ui.showConfirm("Receive this purchase order and increment stock levels?")) {
         try {
           await apiClient(`/purchasing/orders/${id}/receive`, {
             method: "POST",
@@ -350,7 +423,7 @@ async function renderPurchasingView(container) {
           });
           renderPurchasingView(container);
         } catch (err) {
-          alert(err.message || "Failed to receive PO");
+          ui.showToast(err.message || "Failed to receive PO", "error");
         }
       }
     });
@@ -464,7 +537,7 @@ async function renderSalesView(container) {
     let custRes = await apiClient("/sales/customers");
     let customers = custRes.data || [];
     if (customers.length === 0) {
-      const cName = prompt("Enter customer name to create initial client:", "Acme Corp");
+      const cName = await ui.showPrompt("Enter customer name to create initial client:", "Acme Corp");
       if (!cName) return;
       const newCust = await apiClient("/sales/customers", {
         method: "POST",
@@ -476,12 +549,12 @@ async function renderSalesView(container) {
     const prodRes = await apiClient("/inventory");
     const prods = prodRes.data || [];
     if (prods.length === 0) {
-      alert("Please add products in Inventory first.");
+      ui.showToast("Please add products in Inventory first.", "error");
       return;
     }
 
     const prod = prods[0];
-    const qtyStr = prompt(`Sell quantity for ${prod.name} (Stock: ${prod.stock}):`, "2");
+    const qtyStr = await ui.showPrompt(`Sell quantity for ${prod.name} (Stock: ${prod.stock}):`, "2");
     if (!qtyStr) return;
 
     try {
@@ -498,14 +571,14 @@ async function renderSalesView(container) {
       });
       renderSalesView(container);
     } catch (err) {
-      alert(err.message || "Failed to create sales order");
+      ui.showToast(err.message || "Failed to create sales order", "error");
     }
   });
 
   container.querySelectorAll(".fulfill-so-btn").forEach(btn => {
     btn.addEventListener("click", async (e) => {
       const id = e.currentTarget.dataset.id;
-      if (confirm("Fulfill sales order? This will deduct warehouse stock and generate an invoice.")) {
+      if (await ui.showConfirm("Fulfill sales order? This will deduct warehouse stock and generate an invoice.")) {
         try {
           await apiClient(`/sales/orders/${id}/fulfill`, {
             method: "POST",
@@ -513,7 +586,7 @@ async function renderSalesView(container) {
           });
           renderSalesView(container);
         } catch (err) {
-          alert(err.message || "Failed to fulfill sales order");
+          ui.showToast(err.message || "Failed to fulfill sales order", "error");
         }
       }
     });
@@ -523,7 +596,7 @@ async function renderSalesView(container) {
     btn.addEventListener("click", async (e) => {
       const id = e.currentTarget.dataset.id;
       const due = parseFloat(e.currentTarget.dataset.due);
-      const amountStr = prompt(`Enter payment amount (Outstanding: $${due.toFixed(2)}):`, due.toString());
+      const amountStr = await ui.showPrompt(`Enter payment amount (Outstanding: $${due.toFixed(2)}):`, due.toString());
       if (!amountStr) return;
       try {
         await apiClient(`/sales/invoices/${id}/payments`, {
@@ -536,7 +609,7 @@ async function renderSalesView(container) {
         });
         renderSalesView(container);
       } catch (err) {
-        alert(err.message || "Failed to record payment");
+        ui.showToast(err.message || "Failed to record payment", "error");
       }
     });
   });
@@ -588,10 +661,10 @@ async function renderExpensesView(container) {
   `;
 
   document.getElementById("record-expense-btn")?.addEventListener("click", async () => {
-    const payee = prompt("Payee / Vendor name:", "AWS Cloud Services");
+    const payee = await ui.showPrompt("Payee / Vendor name:", "AWS Cloud Services");
     if (!payee) return;
-    const amountStr = prompt("Amount (USD):", "149.50");
-    const desc = prompt("Description:", "Monthly infrastructure hosting");
+    const amountStr = await ui.showPrompt("Amount (USD):", "149.50");
+    const desc = await ui.showPrompt("Description:", "Monthly infrastructure hosting");
 
     try {
       await apiClient("/expenses", {
@@ -605,7 +678,7 @@ async function renderExpensesView(container) {
       });
       renderExpensesView(container);
     } catch (err) {
-      alert(err.message || "Failed to record expense");
+      ui.showToast(err.message || "Failed to record expense", "error");
     }
   });
 }
@@ -659,12 +732,12 @@ async function renderEmployeesView(container) {
   `;
 
   document.getElementById("add-employee-btn")?.addEventListener("click", async () => {
-    const firstName = prompt("First Name:");
+    const firstName = await ui.showPrompt("First Name:");
     if (!firstName) return;
-    const lastName = prompt("Last Name:");
+    const lastName = await ui.showPrompt("Last Name:");
     if (!lastName) return;
-    const email = prompt("Email Address:", `${firstName.toLowerCase()}@enterprise.test`);
-    const jobTitle = prompt("Job Title:", "Operations Specialist");
+    const email = await ui.showPrompt("Email Address:", `${firstName.toLowerCase()}@enterprise.test`);
+    const jobTitle = await ui.showPrompt("Job Title:", "Operations Specialist");
 
     try {
       await apiClient("/employees", {
@@ -673,7 +746,7 @@ async function renderEmployeesView(container) {
       });
       renderEmployeesView(container);
     } catch (err) {
-      alert(err.message || "Failed to add employee");
+      ui.showToast(err.message || "Failed to add employee", "error");
     }
   });
 }
@@ -818,7 +891,7 @@ async function renderLedgerView(container) {
   `;
 
   container.querySelector("#btn-new-entry").addEventListener("click", () => {
-    alert("Journal entries are generated automatically from Purchasing and Sales. Contact your administrator to record a manual adjustment.");
+    ui.showToast("Journal entries are generated automatically from Purchasing and Sales. Contact your administrator.", "info");
   });
 
   const [balanceResult, entriesResult] = await Promise.all([
@@ -1003,7 +1076,7 @@ async function renderSettingsView(container) {
         if (!checkout.data?.url) throw new Error("Checkout URL was not returned.");
         window.location.href = checkout.data.url;
       } catch (error) {
-        alert(`Checkout failed: ${error.message}`);
+        ui.showToast(`Checkout failed: ${error.message}`, "error");
         button.disabled = false;
         button.textContent = planId === "plan_pro_123" ? "Subscribe to Pro" : "Subscribe to Enterprise";
         console.error("Failed to start subscription checkout:", error);

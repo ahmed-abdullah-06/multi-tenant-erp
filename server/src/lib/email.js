@@ -1,21 +1,21 @@
 const nodemailer = require('nodemailer');
-const logger = require('./logger'); // Assuming you are using your Winston logger
+const logger = require('./logger');
+
+const transporter = nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE || 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
 const sendEmail = async (options) => {
-    // The simplified transporter using only the service name and app password
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
-
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: options.email,
         subject: options.subject,
         text: options.message,
+        ...(options.html ? { html: options.html } : {})
     };
 
     try {
@@ -27,11 +27,3 @@ const sendEmail = async (options) => {
     }
 };
 module.exports = sendEmail;
-
-// TEMPORARY TEST: Add this to the bottom of email.js
-sendEmail({
-    email: process.env.EMAIL_USER, // Will send an email to yourself
-    subject: 'Nodemailer Connection Test',
-    message: 'If you are reading this, the Gmail App Password is working perfectly.'
-}).then(() => console.log('\n---> TEST SUCCESS: Email connected!\n'))
-  .catch(err => console.error('\n---> TEST FAILED:', err, '\n'));

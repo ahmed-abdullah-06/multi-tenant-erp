@@ -3,7 +3,12 @@ const { successResponse } = require('../../lib/response');
 
 const getDashboardSummary = async (req, res, next) => {
     try {
-        const summary = await reportsService.getDashboardSummary(req.tenantId);
+        const { startDate, endDate } = req.query;
+        const summary = await reportsService.getDashboardSummary(
+            req.tenantId,
+            startDate,
+            endDate
+        );
         return successResponse(res, 200, 'Dashboard summary retrieved', summary);
     } catch (error) {
         next(error);
