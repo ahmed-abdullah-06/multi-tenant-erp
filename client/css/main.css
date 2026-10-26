@@ -988,3 +988,82 @@ a {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+/* =========================================
+   SKELETON LOADING SHIMMER ANIMATION
+   ========================================= */
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite ease-in-out;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.skeleton-text {
+  height: 14px;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.skeleton-title {
+  height: 20px;
+  width: 45%;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.skeleton-badge {
+  height: 18px;
+  width: 65px;
+  border-radius: 12px;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-metric-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-metric-card .skeleton-val {
+  height: 32px;
+  width: 60%;
+  border-radius: 6px;
+}
+
+.skeleton-metric-card .skeleton-sub {
+  height: 12px;
+  width: 80%;
+  border-radius: 4px;
+}
+
+.skeleton-row td {
+  padding: 14px 16px;
+}
+
+.skeleton-row .skeleton-cell {
+  height: 16px;
+  border-radius: 4px;
+}
+

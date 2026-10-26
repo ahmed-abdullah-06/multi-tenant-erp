@@ -4,6 +4,7 @@ import { renderSidebar } from "../components/sidebar.js";
 import { renderNavbar } from "../components/navbar.js";
 import { getAccess, hasPermission } from '../state/store.js';
 import { ui } from "../ui.js";
+import { initClientSocket } from "../socket.js";
 
 const dashboardCharts = {};
 
@@ -31,11 +32,69 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.addEventListener("hashchange", handleHashChange);
   handleHashChange();
+
+  initClientSocket(() => {
+    // Only refresh active view when a relevant real-time event triggers
+    const currentHash = window.location.hash.replace("#", "") || "dashboard";
+    if (['dashboard', 'inventory', 'sales'].includes(currentHash)) {
+      renderView(currentHash);
+    }
+  });
 });
+
+function renderSkeletonLayout(container) {
+  container.innerHTML = `
+    <div style="margin-bottom: 1.5rem;">
+      <div class="skeleton skeleton-title" style="height: 28px; width: 220px; margin-bottom: 8px;"></div>
+      <div class="skeleton skeleton-text" style="width: 340px; height: 14px;"></div>
+    </div>
+
+    <div class="skeleton-grid">
+      ${Array(4).fill(0).map(() => `
+        <div class="skeleton-metric-card">
+          <div class="skeleton skeleton-text" style="width: 50%;"></div>
+          <div class="skeleton skeleton-val"></div>
+          <div class="skeleton skeleton-sub"></div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="data-card" style="margin-top: 1.5rem;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
+        <div class="skeleton skeleton-title" style="width: 180px; margin: 0;"></div>
+        <div class="skeleton skeleton-badge"></div>
+      </div>
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th><span class="skeleton skeleton-text" style="width: 60px;"></span></th>
+              <th><span class="skeleton skeleton-text" style="width: 120px;"></span></th>
+              <th><span class="skeleton skeleton-text" style="width: 80px;"></span></th>
+              <th><span class="skeleton skeleton-text" style="width: 70px;"></span></th>
+              <th><span class="skeleton skeleton-text" style="width: 90px;"></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Array(5).fill(0).map(() => `
+              <tr class="skeleton-row">
+                <td><span class="skeleton skeleton-text" style="width: 70px;"></span></td>
+                <td><span class="skeleton skeleton-text" style="width: 140px;"></span></td>
+                <td><span class="skeleton skeleton-text" style="width: 80px;"></span></td>
+                <td><span class="skeleton skeleton-badge"></span></td>
+                <td><span class="skeleton skeleton-text" style="width: 60px;"></span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
 
 async function renderView(viewName) {
   const container = document.getElementById("view-container");
-  container.innerHTML = `<div style="text-align: center; padding: 3rem;"><h3>Loading ${viewName}...</h3></div>`;
+  renderSkeletonLayout(container);
 
   try {
     switch (viewName) {
@@ -809,18 +868,33 @@ async function renderAuditView(container) {
               <th>Action</th>
               <th>Entity</th>
               <th>User</th>
+              <th>Changes / Diff</th>
               <th>Details</th>
             </tr>
           </thead>
           <tbody>
-            ${logs.length === 0 ? `<tr><td colspan="5" style="text-align: center; color: #64748b;">No audit events recorded yet.</td></tr>` : ''}
+            ${logs.length === 0 ? `<tr><td colspan="6" style="text-align: center; color: #64748b;">No audit events recorded yet.</td></tr>` : ''}
             ${logs.map(log => `
               <tr>
                 <td>${new Date(log.createdAt).toLocaleString()}</td>
                 <td><span class="badge badge-info">${log.action}</span></td>
                 <td><strong>${log.entityType}</strong></td>
                 <td>${log.user?.email || "System"}</td>
-                <td><pre style="font-size: 0.75rem; margin: 0;">${JSON.stringify(log.details || {})}</pre></td>
+                <td>
+                  ${log.diff ? `
+                    <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-family: monospace;">
+                      ${Object.entries(log.diff).map(([key, change]) => `
+                        <span style="background: rgba(255,255,255,0.06); padding: 3px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                          <span style="color: #94a3b8; font-weight: 600;">${key}:</span> 
+                          <span style="color: #f87171; text-decoration: line-through;">${JSON.stringify(change.old ?? change.before ?? '-')}</span>
+                          <span style="color: #64748b;">&rarr;</span> 
+                          <span style="color: #34d399; font-weight: 700;">${JSON.stringify(change.new ?? change.after ?? '-')}</span>
+                        </span>
+                      `).join('')}
+                    </div>
+                  ` : '<span style="color: #64748b; font-size: 0.8rem;">-</span>'}
+                </td>
+                <td><pre style="font-size: 0.75rem; margin: 0; color: #94a3b8;">${JSON.stringify(log.details || {})}</pre></td>
               </tr>
             `).join('')}
           </tbody>

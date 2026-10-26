@@ -1,6 +1,7 @@
 import { apiClient } from './apiClient.js';
 import { store } from './store.js';
 import { ui } from './ui.js';
+import { initClientSocket } from './socket.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Centralized auth check
@@ -13,12 +14,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 1. Load Inventory Data ---
     const loadInventory = async () => {
+        const tbody = document.getElementById('inventory-body');
+        if (tbody && tbody.children.length === 0) {
+            tbody.innerHTML = Array(4).fill(0).map(() => `
+                <tr class="skeleton-row">
+                    <td><span class="skeleton skeleton-text" style="width: 80px;"></span></td>
+                    <td><span class="skeleton skeleton-text" style="width: 160px;"></span></td>
+                    <td><span class="skeleton skeleton-text" style="width: 70px;"></span></td>
+                    <td class="text-right"><span class="skeleton skeleton-text" style="width: 40px; margin-left: auto;"></span></td>
+                    <td class="text-right"><span class="skeleton skeleton-badge" style="margin-left: auto;"></span></td>
+                    <td class="text-right"><span class="skeleton skeleton-text" style="width: 60px; margin-left: auto;"></span></td>
+                </tr>
+            `).join('');
+        }
+
         try {
             const response = await apiClient.get('/api/v1/inventory');
             const result = await response.json();
 
-            const tbody = document.getElementById('inventory-body');
-            tbody.innerHTML = '';
+            if (tbody) tbody.innerHTML = '';
 
             if (!response.ok) throw new Error(result.error || 'Failed to load data');
             
@@ -105,6 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await response.json();
 
             if (response.ok) {
+                ui.showToast('Stock adjusted successfully.', 'success');
                 modal.style.display = 'none';
                 loadInventory(); 
             } else if (response.status === 409) {
@@ -119,5 +134,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // --- 4. Add Product Handler ---
+    const addProductBtn = document.querySelector('.header-flex .btn-primary[data-permission="inventory:write"]');
+    if (addProductBtn) {
+        addProductBtn.addEventListener('click', async () => {
+            const name = await ui.showPrompt('Product Name:');
+            if (!name) return;
+            const priceStr = await ui.showPrompt('Price (USD):', '19.99');
+            if (!priceStr) return;
+            const stockStr = await ui.showPrompt('Initial Stock:', '25');
+            if (!stockStr) return;
+            const sku = await ui.showPrompt('SKU code (optional):', 'PRD-' + Math.floor(Math.random() * 9000 + 1000));
+            try {
+                const response = await apiClient.post('/api/v1/inventory', {
+                    name,
+                    price: parseFloat(priceStr),
+                    stock: parseInt(stockStr, 10),
+                    sku: sku || undefined
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    ui.showToast('Product created successfully', 'success');
+                    loadInventory();
+                } else {
+                    ui.showToast(result.error || 'Failed to create product', 'error');
+                }
+            } catch (err) {
+                ui.showToast(err.message || 'Failed to create product', 'error');
+            }
+        });
+    }
+
     loadInventory();
+    initClientSocket(() => {
+        loadInventory();
+    });
 });

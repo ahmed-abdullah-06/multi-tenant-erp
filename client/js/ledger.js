@@ -8,21 +8,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-US', { 
-            style: 'decimal', 
-            minimumFractionDigits: 2, 
-            maximumFractionDigits: 2 
-        }).format(amount);
+    let orgCurrency = 'USD';
+    const formatCurrency = (amount, curr = orgCurrency) => {
+        try {
+            return new Intl.NumberFormat('en-US', { 
+                style: 'currency', 
+                currency: curr || 'USD',
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            }).format(amount);
+        } catch {
+            return `${curr || 'USD'} ${parseFloat(amount || 0).toFixed(2)}`;
+        }
     };
 
     // --- 1. Load Trial Balance ---
     const loadTrialBalance = async () => {
+        const tbody = document.getElementById('trial-balance-body');
+        if (tbody) {
+            tbody.innerHTML = Array(4).fill(0).map(() => `
+                <tr class="skeleton-row">
+                    <td><span class="skeleton skeleton-text" style="width: 50px;"></span></td>
+                    <td><span class="skeleton skeleton-text" style="width: 140px;"></span></td>
+                    <td><span class="skeleton skeleton-badge"></span></td>
+                    <td class="text-right"><span class="skeleton skeleton-text" style="width: 60px; margin-left: auto;"></span></td>
+                    <td class="text-right"><span class="skeleton skeleton-text" style="width: 60px; margin-left: auto;"></span></td>
+                </tr>
+            `).join('');
+        }
+
         try {
             const response = await apiClient.get('/api/v1/accounting/trial-balance');
             const result = await response.json();
 
             if (!response.ok) throw new Error(result.error || 'Failed to load trial balance');
+
+            if (result.data.currency) {
+                orgCurrency = result.data.currency;
+            }
 
             const { accounts, totalDebits, totalCredits, isBalanced } = result.data;
 
@@ -38,8 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 statusBadge.className = 'status-indicator status-unbalanced';
             }
 
-            const tbody = document.getElementById('trial-balance-body');
-            tbody.innerHTML = '';
+            if (tbody) tbody.innerHTML = '';
 
             if (accounts.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #888;">No accounts found.</td></tr>';
@@ -66,14 +88,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 2. Load Recent Journal Entries ---
     const loadJournalEntries = async () => {
+        const tbody = document.getElementById('journal-entries-body');
+        if (tbody) {
+            tbody.innerHTML = Array(3).fill(0).map(() => `
+                <tr class="skeleton-row">
+                    <td><span class="skeleton skeleton-text" style="width: 70px;"></span></td>
+                    <td><span class="skeleton skeleton-text" style="width: 80px;"></span></td>
+                    <td><span class="skeleton skeleton-text" style="width: 180px;"></span></td>
+                    <td class="text-right"><span class="skeleton skeleton-text" style="width: 70px; margin-left: auto;"></span></td>
+                </tr>
+            `).join('');
+        }
+
         try {
             const response = await apiClient.get('/api/v1/accounting/journal-entries?limit=10');
             const result = await response.json();
 
             if (!response.ok) throw new Error(result.error || 'Failed to load journal entries');
 
-            const tbody = document.getElementById('journal-entries-body');
-            tbody.innerHTML = '';
+            if (tbody) tbody.innerHTML = '';
 
             if (result.data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">No recent journal entries.</td></tr>';
