@@ -611,6 +611,7 @@ model Invoice {
   totalAmount    Float     @default(0.0)
   paidAmount     Float     @default(0.0)
   currency       String    @default("USD")
+  exchangeRate   Float     @default(1.0)
   dueDate        DateTime?
   issuedDate     DateTime  @default(now())
   notes          String?
@@ -742,6 +743,7 @@ model AuditLog {
   entityType     String // PRODUCT, ORDER, INVOICE, USER, MEMBERSHIP, etc.
   entityId       String?
   details        Json?
+  diff           Json? // Before/After Diffs: {"fieldName": {"old": val, "new": val}}
   ipAddress      String?
   userAgent      String?
   createdAt      DateTime @default(now())
@@ -923,6 +925,8 @@ model JournalEntry {
   date           DateTime      @default(now())
   description    String
   reference      String? // e.g., "INV-1024"
+  currency       String        @default("USD")
+  exchangeRate   Decimal       @default(1.000000) @db.Decimal(18, 6)
   lines          JournalLine[]
   createdAt      DateTime      @default(now())
 }
@@ -935,6 +939,8 @@ model JournalLine {
   account        Account      @relation(fields: [accountId], references: [id])
   debit          Decimal      @default(0.00) @db.Decimal(19, 4)
   credit         Decimal      @default(0.00) @db.Decimal(19, 4)
+  currency       String?
+  exchangeRate   Decimal?     @default(1.000000) @db.Decimal(18, 6)
 }
 
 enum AccountType {
