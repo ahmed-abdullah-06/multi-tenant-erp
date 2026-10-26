@@ -1,7 +1,16 @@
 const request = require('supertest');
 const app = require('../../server/src/app');
+const { redis } = require('../../server/src/middleware/idempotency');
+const prisma = require('../../server/src/lib/prisma');
 
 describe('Health Check API', () => {
+    afterAll(async () => {
+        if (redis && redis.status !== 'end') {
+            await redis.quit().catch(() => {});
+        }
+        await prisma.$disconnect().catch(() => {});
+    });
+
     it('should return 200 OK and status ok for the /health endpoint', async () => {
         const response = await request(app).get('/health');
         
