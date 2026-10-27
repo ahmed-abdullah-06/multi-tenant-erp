@@ -14,7 +14,8 @@ async function startServer() {
 
     // 2. Create HTTP server and attach Socket.io
     const server = http.createServer(app);
-    initSocket(server);
+    const io = initSocket(server);
+    app.set('io', io);
     logger.info('WebSocket server initialized and listening.');
 
     // 3. Start listening
