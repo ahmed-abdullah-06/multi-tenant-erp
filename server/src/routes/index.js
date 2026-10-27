@@ -34,6 +34,6 @@ router.use('/audit', auditRoutes);
 router.use('/billing', billingRoutes);
 router.use('/accounting', accountingRoutes);
 router.use('/invitations', invitationRoutes);
-router.use('/upload', require('./modules/upload/upload.routes'))
+router.use('/upload', require('../modules/upload/upload.routes'));
 
 module.exports = router;
