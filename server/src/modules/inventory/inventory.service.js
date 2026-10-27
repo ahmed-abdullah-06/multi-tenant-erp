@@ -1,4 +1,6 @@
 const prisma = require('../../lib/prisma');
+const { emitTenantEvent } = require('../../lib/socket');
+const auditService = require('../audit/audit.service');
 
 const createProduct = async (tenantId, productData) => {
     return await prisma.product.create({
@@ -52,6 +54,43 @@ const adjustStock = async (tenantId, productId, quantityChange) => {
         data: { stock: { increment: quantityChange } }
     });
     if (result.count === 0) throw new Error("Product not found or access denied.");
+
+    try {
+        const prod = await prisma.product.findUnique({ where: { id: productId } });
+        if (prod) {
+            if (prod.stock <= (prod.minStockLevel || 0)) {
+                emitTenantEvent(tenantId, 'stock:low', {
+                    productId: prod.id,
+                    productName: prod.name,
+                    sku: prod.sku,
+                    stock: prod.stock,
+                    minStockLevel: prod.minStockLevel
+                });
+            }
+            emitTenantEvent(tenantId, 'stock:updated', {
+                productId: prod.id,
+                stock: prod.stock
+            });
+
+            // Log enriched audit trail with before/after diff
+            await auditService.logAction(tenantId, null, {
+                action: 'UPDATE',
+                entityType: 'PRODUCT',
+                entityId: prod.id,
+                details: {
+                    productName: prod.name,
+                    sku: prod.sku,
+                    quantityChange
+                },
+                diff: {
+                    stock: { old: prod.stock - quantityChange, new: prod.stock }
+                }
+            });
+        }
+    } catch (err) {
+        // Safe failover
+    }
+
     return result;
 };
 
@@ -187,8 +226,58 @@ const adjustStockSafely = async (tenantId, balanceId, currentVersion, quantityCh
     });
 
     if (result.count === 0) {
+        // Real-Time Optimistic Lock Conflict notification
+        emitTenantEvent(tenantId, 'stock:conflict', {
+            balanceId,
+            attemptedVersion: currentVersion,
+            message: 'A concurrent stock adjustment conflict occurred. Inventory balances were modified by another session.'
+        });
+
         // The count is 0 because the version changed between read and write.
         throw new Error('Conflict: The record was modified by another user. Please refresh and try again.');
+    }
+
+    try {
+        const balance = await prisma.inventoryBalance.findUnique({
+            where: { id: balanceId },
+            include: { product: true }
+        });
+        if (balance && balance.product) {
+            if (balance.quantity <= (balance.product.minStockLevel || 0)) {
+                emitTenantEvent(tenantId, 'stock:low', {
+                    productId: balance.product.id,
+                    productName: balance.product.name,
+                    sku: balance.product.sku,
+                    stock: balance.quantity,
+                    minStockLevel: balance.product.minStockLevel,
+                    warehouseId: balance.warehouseId
+                });
+            }
+            emitTenantEvent(tenantId, 'stock:updated', {
+                productId: balance.productId,
+                balanceId: balance.id,
+                quantity: balance.quantity,
+                version: balance.version
+            });
+
+            // Log enriched audit trail with before/after diff
+            await auditService.logAction(tenantId, null, {
+                action: 'UPDATE',
+                entityType: 'INVENTORY_BALANCE',
+                entityId: balanceId,
+                details: {
+                    productName: balance.product.name,
+                    sku: balance.product.sku,
+                    quantityChange
+                },
+                diff: {
+                    quantity: { old: balance.quantity - quantityChange, new: balance.quantity },
+                    version: { old: currentVersion, new: balance.version }
+                }
+            });
+        }
+    } catch (err) {
+        // Safe failover
     }
 
     return true;

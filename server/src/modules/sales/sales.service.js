@@ -1,4 +1,5 @@
 const prisma = require('../../lib/prisma');
+const { emitTenantEvent } = require('../../lib/socket');
 
 // Customers
 const getCustomers = async (tenantId) => {
@@ -236,6 +237,38 @@ const fulfillSalesOrder = async (tenantId, orderId, { warehouseId }) => {
                 totalAmount: so.totalAmount,
                 status: 'ISSUED'
             }
+        });
+
+        // Broadcast stock updates and check low stock thresholds
+        for (const item of so.items) {
+            try {
+                const prod = await tx.product.findUnique({
+                    where: { id: item.productId }
+                });
+                if (prod) {
+                    if (prod.stock <= (prod.minStockLevel || 0)) {
+                        emitTenantEvent(tenantId, 'stock:low', {
+                            productId: prod.id,
+                            productName: prod.name,
+                            sku: prod.sku,
+                            stock: prod.stock,
+                            minStockLevel: prod.minStockLevel
+                        });
+                    }
+                    emitTenantEvent(tenantId, 'stock:updated', {
+                        productId: prod.id,
+                        stock: prod.stock
+                    });
+                }
+            } catch (e) {
+                // Ignore socket emission errors in transaction
+            }
+        }
+
+        emitTenantEvent(tenantId, 'sales:order_fulfilled', {
+            orderId: so.id,
+            orderNumber: so.orderNumber,
+            invoiceId: invoice.id
         });
 
         return { salesOrderId: so.id, status: 'SHIPPED', invoice };

@@ -15,7 +15,7 @@ const getAuditLogs = async (tenantId, { limit = 50, entityType, action }) => {
     });
 };
 
-const logAction = async (tenantId, userId, { action, entityType, entityId, details, ipAddress, userAgent }) => {
+const logAction = async (tenantId, userId, { action, entityType, entityId, details, diff, ipAddress, userAgent }) => {
     return await prisma.auditLog.create({
         data: {
             organizationId: tenantId,
@@ -24,6 +24,7 @@ const logAction = async (tenantId, userId, { action, entityType, entityId, detai
             entityType,
             entityId,
             details,
+            diff,
             ipAddress,
             userAgent
         }

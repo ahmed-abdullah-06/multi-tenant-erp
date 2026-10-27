@@ -29,14 +29,14 @@ const getJournalEntries = async (req, res, next) => {
 const createManualEntry = async (req, res, next) => {
     try {
         const organizationId = req.tenantId;
-        const { description, reference, lines } = req.body;
+        const { description, reference, lines, currency, exchangeRate } = req.body;
 
         // Lines should be an array of { accountId, debit, credit }
         if (!lines || lines.length < 2) {
             return res.status(400).json({ error: 'A journal entry must have at least two lines.' });
         }
 
-        const entry = await ledgerService.recordTransaction(organizationId, description, lines, reference);
+        const entry = await ledgerService.recordTransaction(organizationId, description, lines, reference, currency, exchangeRate);
         
         return successResponse(res, 201, 'Manual journal entry recorded successfully', entry);
     } catch (error) {

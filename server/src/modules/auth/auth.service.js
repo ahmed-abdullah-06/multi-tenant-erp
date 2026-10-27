@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const prisma = require('../../lib/prisma'); // Adjust path to your prisma client
-const sendEmail = require('../../lib/email')
+const emailService = require('../../services/email.service');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_ACCESS_EXPIRES_IN = process.env.NODE_ENV === 'production' ? '15m' : '7d'; // Longer for dev
@@ -363,12 +363,12 @@ const forgotPassword = async (email, originUrl) => {
 
     // 4. Send the email with the unhashed token
     const resetUrl = `${originUrl}/reset-password.html?token=${resetToken}`;
-    const message = `You requested a password reset. Please click the following link to set a new password:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email.`;
 
-    await sendEmail({
+    await emailService.sendPasswordResetEmail({
         email: user.email,
-        subject: 'Password Reset Request',
-        message
+        name: user.name,
+        resetUrl,
+        expireMinutes: 15
     });
 
     return true;

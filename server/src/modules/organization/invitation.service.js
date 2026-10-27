@@ -1,5 +1,6 @@
 const prisma = require('../../lib/prisma');
 const crypto = require('crypto');
+const emailService = require('../../services/email.service');
 
 const sendInvite = async (organizationId, inviterId, email, role) => {
     // Check if the user is already a member
@@ -31,8 +32,26 @@ const sendInvite = async (organizationId, inviterId, email, role) => {
         }
     });
 
-    // Note: In a production environment, you would integrate an email service 
-    // (like SendGrid or AWS SES) right here to email the token/link to the user.
+    // Send invitation email
+    const [org, inviter] = await Promise.all([
+        prisma.organization.findUnique({ where: { id: organizationId } }),
+        prisma.user.findUnique({ where: { id: inviterId } })
+    ]);
+
+    const baseUrl = process.env.APP_URL || 'http://localhost:3000';
+    const inviteUrl = `${baseUrl}/login.html?inviteToken=${token}`;
+
+    try {
+        await emailService.sendInvitationEmail({
+            email,
+            organizationName: org ? org.name : 'Your Team',
+            inviterName: inviter ? (inviter.name || inviter.email) : 'A team administrator',
+            role,
+            inviteUrl
+        });
+    } catch (error) {
+        console.warn('Failed to send invitation email:', error.message);
+    }
     
     return invitation;
 };
