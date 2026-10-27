@@ -16,8 +16,8 @@ const initSocket = (server) => {
 
     // Authentication & Tenant Isolation Middleware
     io.use((socket, next) => {
-        const token = socket.handshake.auth.token;
-        const tenantId = socket.handshake.auth.tenantId;
+        const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+        const tenantId = socket.handshake.auth?.tenantId || socket.handshake.query?.tenantId;
 
         if (!token || !tenantId) {
             return next(new Error('Authentication and tenantId are required'));
@@ -55,4 +55,16 @@ const getIo = () => {
     return io;
 };
 
-module.exports = { initSocket, getIo };
+const emitTenantEvent = (tenantId, event, payload) => {
+    try {
+        if (io) {
+            io.to(tenantId).emit(event, payload);
+            return true;
+        }
+    } catch (err) {
+        logger.warn(`Failed to emit socket event "${event}" to tenant "${tenantId}": ${err.message}`);
+    }
+    return false;
+};
+
+module.exports = { initSocket, getIo, emitTenantEvent };
