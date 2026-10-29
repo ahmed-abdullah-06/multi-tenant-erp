@@ -15,8 +15,7 @@ router.post('/refresh', authLimiter, authController.refreshToken);
 router.post('/logout', requireAuth, authController.logout);
 router.get('/me', requireAuth, authController.me);
 
-// Add these to your public, unauthenticated routes
-router.post('/forgot-password', authController.forgotPassword);
-router.patch('/reset-password/:token', authController.resetPassword);
+router.post('/forgot-password', authLimiter, authController.forgotPassword);
+router.patch('/reset-password/:token', authLimiter, authController.resetPassword);
 
 module.exports = router;
