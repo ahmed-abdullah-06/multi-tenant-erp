@@ -51,7 +51,7 @@ if (process.env.REDIS_URL) {
         // Initialize the Worker to process jobs
         worker = new Worker('webhook-deliveries', async (job) => {
             if (job.name === 'deliver-webhook') {
-                const { processWebhook } = require('../services/webhook.service');
+                const { processWebhook } = require('../modules/webhooks/webhook.service');
                 await processWebhook(job.data);
             }
         }, { connection });

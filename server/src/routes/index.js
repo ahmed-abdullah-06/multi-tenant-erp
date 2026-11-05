@@ -16,6 +16,8 @@ const auditRoutes = require('../modules/audit/audit.routes');
 const billingRoutes = require('../modules/billing/billing.routes');
 const accountingRoutes = require('../modules/accounting/accounting.routes');
 const invitationRoutes = require('../modules/organization/invitation.routes');
+const apikeyRoutes = require('../modules/apikeys/apikey.routes');
+const webhookRoutes = require('../modules/webhooks/webhook.routes');
 
 // Mount routes under /api/v1 prefix
 router.use('/auth', authRoutes);
@@ -35,5 +37,7 @@ router.use('/billing', billingRoutes);
 router.use('/accounting', accountingRoutes);
 router.use('/invitations', invitationRoutes);
 router.use('/upload', require('../modules/upload/upload.routes'));
+router.use('/apikeys', apikeyRoutes);
+router.use('/webhooks', webhookRoutes);
 
 module.exports = router;

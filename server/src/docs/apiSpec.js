@@ -1,0 +1,564 @@
+/**
+ * Simple API Specification (OpenAPI 3.0)
+ * Can be expanded later with more detailed schemas
+ */
+
+const swaggerSpec = {
+  openapi: '3.0.0',
+  info: {
+    title: 'Multi-Tenant ERP API',
+    description: 'API documentation for the Multi-Tenant ERP system',
+    version: '1.0.0',
+    contact: {
+      name: 'API Support',
+      email: 'support@erp.com'
+    }
+  },
+  servers: [
+    {
+      url: 'http://localhost:5000/api/v1',
+      description: 'Development server'
+    }
+  ],
+  tags: [
+    { name: 'Authentication', description: 'Authentication endpoints' },
+    { name: 'Organizations', description: 'Organization management' },
+    { name: 'Users', description: 'User management' },
+    { name: 'RBAC', description: 'Role and permission management' },
+    { name: 'Employees', description: 'Employee management' },
+    { name: 'Inventory', description: 'Inventory and warehouse management' },
+    { name: 'Purchasing', description: 'Purchase orders and suppliers' },
+    { name: 'Sales', description: 'Sales orders and customers' },
+    { name: 'Accounting', description: 'Accounting and ledger' },
+    { name: 'Expenses', description: 'Expense tracking' },
+    { name: 'Billing', description: 'Billing and subscriptions' },
+    { name: 'Reports', description: 'Reporting endpoints' },
+    { name: 'Notifications', description: 'Notification management' },
+    { name: 'Audit', description: 'Audit logs' }
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT'
+      }
+    },
+    schemas: {
+      Error: {
+        type: 'object',
+        properties: {
+          error: {
+            type: 'string',
+            description: 'Error message'
+          }
+        },
+        required: ['error']
+      },
+      SuccessResponse: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            description: 'Success message'
+          },
+          data: {
+            type: 'object',
+            description: 'Response data'
+          }
+        },
+        required: ['message', 'data']
+      },
+      User: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          email: { type: 'string', format: 'email' },
+          status: { type: 'string', enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'] },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        },
+        required: ['id', 'name', 'email']
+      },
+      Organization: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          slug: { type: 'string' },
+          status: { type: 'string', enum: ['ACTIVE', 'SUSPENDED', 'DELETED'] },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        },
+        required: ['id', 'name', 'slug']
+      },
+      Product: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          sku: { type: 'string' },
+          price: { type: 'number' },
+          cost: { type: 'number' },
+          stock: { type: 'integer' },
+          minStockLevel: { type: 'integer' },
+          categoryId: { type: 'string', format: 'uuid' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        },
+        required: ['id', 'name']
+      },
+      AuthResponse: {
+        type: 'object',
+        properties: {
+          accessToken: { type: 'string' },
+          refreshToken: { type: 'string' },
+          user: { $ref: '#/components/schemas/User' },
+          organizations: { type: 'array', items: { $ref: '#/components/schemas/Organization' } },
+          defaultOrganizationId: { type: 'string', format: 'uuid' },
+          access: {
+            type: 'object',
+            properties: {
+              roleId: { type: 'string', format: 'uuid' },
+              roleName: { type: 'string' },
+              permissions: { type: 'array', items: { type: 'string' } }
+            }
+          }
+        },
+        required: ['accessToken', 'refreshToken', 'user']
+      }
+    }
+  },
+  paths: {
+    // Authentication
+    '/auth/register': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Register a new user',
+        description: 'Register a new user with organization',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  email: { type: 'string', format: 'email' },
+                  password: { type: 'string', minLength: 8 }
+                },
+                required: ['name', 'email', 'password']
+              }
+            }
+          }
+        },
+        responses: {
+          201: {
+            description: 'User registered successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/AuthResponse' }
+              }
+            }
+          },
+          400: {
+            description: 'Invalid input',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/auth/login': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Login user',
+        description: 'Authenticate user and get tokens',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  email: { type: 'string', format: 'email' },
+                  password: { type: 'string' }
+                },
+                required: ['email', 'password']
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Login successful',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/AuthResponse' }
+              }
+            }
+          },
+          401: {
+            description: 'Invalid credentials',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/auth/refresh': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Refresh access token',
+        description: 'Get new access token using refresh token',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  refreshToken: { type: 'string' }
+                },
+                required: ['refreshToken']
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Token refreshed successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    accessToken: { type: 'string' },
+                    refreshToken: { type: 'string' }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: 'Invalid refresh token',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/auth/me': {
+      get: {
+        tags: ['Authentication'],
+        summary: 'Get current user',
+        description: 'Get current authenticated user details',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: 'User details retrieved',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    user: { $ref: '#/components/schemas/User' },
+                    activeOrganization: { $ref: '#/components/schemas/Organization' },
+                    permissions: { type: 'array', items: { type: 'string' } }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: 'Unauthorized',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/auth/logout': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Logout user',
+        description: 'Logout and revoke tokens',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  refreshToken: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Logout successful'
+          }
+        }
+      }
+    },
+    // Organizations
+    '/organizations': {
+      get: {
+        tags: ['Organizations'],
+        summary: 'Get user organizations',
+        description: 'Get all organizations for the authenticated user',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: 'Organizations retrieved',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/Organization' }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    // Users
+    '/users': {
+      get: {
+        tags: ['Users'],
+        summary: 'Get users',
+        description: 'Get all users in the organization',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          { name: 'offset', in: 'query', schema: { type: 'integer' } }
+        ],
+        responses: {
+          200: {
+            description: 'Users retrieved',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/User' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    // Inventory
+    '/inventory': {
+      get: {
+        tags: ['Inventory'],
+        summary: 'Get products',
+        description: 'Get all products in the organization',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'search', in: 'query', schema: { type: 'string' } },
+          { name: 'categoryId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'minPrice', in: 'query', schema: { type: 'number' } },
+          { name: 'maxPrice', in: 'query', schema: { type: 'number' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          { name: 'offset', in: 'query', schema: { type: 'integer' } }
+        ],
+        responses: {
+          200: {
+            description: 'Products retrieved',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/Product' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ['Inventory'],
+        summary: 'Create product',
+        description: 'Create a new product',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/Product' }
+            }
+          }
+        },
+        responses: {
+          201: {
+            description: 'Product created',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Product' }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/inventory/:id': {
+      get: {
+        tags: ['Inventory'],
+        summary: 'Get product by ID',
+        description: 'Get a specific product',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }
+        ],
+        responses: {
+          200: {
+            description: 'Product retrieved',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Product' }
+              }
+            }
+          },
+          404: {
+            description: 'Product not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Error' }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/inventory/:id/stock': {
+      patch: {
+        tags: ['Inventory'],
+        summary: 'Adjust stock',
+        description: 'Adjust stock quantity for a product',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  quantityChange: { type: 'integer' }
+                },
+                required: ['quantityChange']
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Stock adjusted'
+          },
+          404: {
+            description: 'Product not found'
+          }
+        }
+      }
+    },
+    '/inventory/transfer': {
+      post: {
+        tags: ['Inventory'],
+        summary: 'Transfer stock',
+        description: 'Transfer stock between warehouses',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  sourceWarehouseId: { type: 'string', format: 'uuid' },
+                  destWarehouseId: { type: 'string', format: 'uuid' },
+                  items: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        productId: { type: 'string', format: 'uuid' },
+                        quantity: { type: 'integer' }
+                      },
+                      required: ['productId', 'quantity']
+                    }
+                  },
+                  notes: { type: 'string' }
+                },
+                required: ['sourceWarehouseId', 'destWarehouseId', 'items']
+              }
+            }
+          }
+        },
+        responses: {
+          201: {
+            description: 'Stock transferred'
+          },
+          400: {
+            description: 'Invalid input or insufficient stock'
+          }
+        }
+      }
+    },
+    // Health check
+    '/health': {
+      get: {
+        tags: ['System'],
+        summary: 'Health check',
+        description: 'Check if the API is running',
+        responses: {
+          200: {
+            description: 'Service is healthy',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: { type: 'string' },
+                    timestamp: { type: 'string', format: 'date-time' },
+                    uptime: { type: 'number' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+module.exports = swaggerSpec;

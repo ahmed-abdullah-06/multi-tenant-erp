@@ -52,7 +52,7 @@ const initializeQueues = async () => {
 
     // Initialize webhook worker
     webhookWorker = new Worker('webhook-deliveries', async (job) => {
-      const { processWebhook } = require('../services/webhook.service');
+      const { processWebhook } = require('../modules/webhooks/webhook.service');
       await processWebhook(job.data);
       logger.info(`[Worker] Webhook job ${job.id} completed`);
     }, {
@@ -64,8 +64,8 @@ const initializeQueues = async () => {
 
     // Initialize notification worker
     notificationWorker = new Worker('notifications', async (job) => {
-      const { sendNotification } = require('../services/notification.service');
-      await sendNotification(job.data);
+      const { createNotification } = require('../modules/notifications/notifications.service');
+      await createNotification(job.data.tenantId, job.data);
       logger.info(`[Worker] Notification job ${job.id} completed`);
     }, {
       connection: redisClient,
@@ -76,9 +76,9 @@ const initializeQueues = async () => {
 
     // Initialize report worker
     reportWorker = new Worker('reports', async (job) => {
-      const { generateReport } = require('../services/report.service');
-      await generateReport(job.data);
-      logger.info(`[Worker] Report job ${job.id} completed`);
+      // No async report generator exists; reports are computed on demand via the reports module.
+      // Acknowledge the job so it does not remain queued or fail.
+      logger.info(`[Worker] Report job ${job.id} acknowledged (reports generated on demand)`);
     }, {
       connection: redisClient,
       concurrency: 5,
