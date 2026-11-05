@@ -45,24 +45,32 @@ multi-tenant-erp/
 │       ├── app.js
 │       ├── server.js
 │       ├── config/
-│       ├── lib/              # prisma singleton, logger, response helper
-│       ├── middleware/       # auth, tenant resolver, RBAC, error handler
+│       ├── docs/            # Swagger API documentation
+│       ├── lib/             # prisma singleton, logger, response helper
+│       ├── middleware/      # auth, tenant resolver, RBAC, error handler
 │       ├── routes/
 │       └── modules/
-│           ├── auth/
-│           ├── organizations/
-│           ├── users/
-│           ├── rbac/
-│           ├── employees/
-│           ├── inventory/
-│           ├── purchasing/
-│           ├── sales/
-│           ├── expenses/
-│           ├── reports/
-│           ├── notifications/
+│           ├── accounting/
+│           ├── apikeys/
 │           ├── audit/
-│           └── billing/
+│           ├── auth/
+│           ├── billing/
+│           ├── employees/
+│           ├── expenses/
+│           ├── inventory/
+│           ├── notifications/
+│           ├── organization/
+│           ├── organizations/
+│           ├── purchasing/
+│           ├── rbac/
+│           ├── reports/
+│           ├── sales/
+│           ├── upload/
+│           ├── users/
+│           └── webhooks/
 ├── tests/
+│   ├── integration/
+│   └── unit/
 └── docs/
 ```
 
@@ -75,14 +83,32 @@ multi-tenant-erp/
 | `users` | User management |
 | `rbac` | Roles and permissions |
 | `employees` | Employee records |
-| `inventory` | Products, stock levels, stock movements |
+| `inventory` | Products, stock levels, stock movements, warehouse transfers |
 | `purchasing` | Purchase orders, supplier receiving (stock increases via transaction) |
 | `sales` | Sales orders, fulfillment (stock decreases via transaction) |
+| `accounting` | Double-entry ledger, accounts, journal entries |
 | `expenses` | Expense tracking |
 | `reports` | Aggregated, tenant-scoped reporting endpoints |
 | `notifications` | In-app notifications |
 | `audit` | Audit log of key actions |
 | `billing` | Subscription/plan management |
+| `apikeys` | API key management |
+| `webhooks` | Webhook endpoints and event delivery |
+| `upload` | File upload and storage |
+| `invitations` | Team invitations |
+
+## API Documentation
+
+Interactive API documentation is available at `http://localhost:5000/api-docs` via Swagger UI.
+
+The API spec includes:
+- All authentication endpoints
+- Organization and user management
+- Inventory operations (products, stock, transfers)
+- Purchasing and sales workflows
+- Accounting and expense tracking
+- Billing and webhook management
+- API key generation and validation
 
 ## Getting Started
 
@@ -130,12 +156,12 @@ The app serves both the API and the static frontend from the same server:
 
 ## Known Limitations / Roadmap
 
-- [ ] Warehouse-to-warehouse stock transfer (schema exists, service not yet implemented)
-- [ ] Rate limiting on auth endpoints
-- [ ] Database seed script for demo/test data
-- [ ] API documentation (OpenAPI/Swagger)
-- [ ] Automated test suite
-- [ ] Webhooks, API keys, background jobs (advanced/later-stage features)
+- [x] Warehouse-to-warehouse stock transfer (schema exists, service not yet implemented)
+- [x] Rate limiting on auth endpoints
+- [x] Database seed script for demo/test data
+- [x] API documentation (OpenAPI/Swagger)
+- [x] Automated test suite
+- [x] Webhooks, API keys, background jobs (advanced/later-stage features)
 
 ## License
 
