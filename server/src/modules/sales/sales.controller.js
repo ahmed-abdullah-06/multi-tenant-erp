@@ -72,7 +72,7 @@ const createQuote = async (req, res, next) => {
 // Sales Orders
 const getSalesOrders = async (req, res) => {
     try {
-        const organizationId = req.tenant.id;
+        const organizationId = req.tenantId;
         // Pass req.query as the second argument
         const orders = await salesService.getSalesOrders(organizationId, req.query);
         res.status(200).json({ data: orders });

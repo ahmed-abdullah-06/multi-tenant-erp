@@ -94,10 +94,10 @@ const getSalesOrders = async (organizationId, { search, status, startDate, endDa
         if (endDate) whereClause.createdAt.lte = new Date(endDate);
     }
 
-    // Search by order reference OR customer name/email
+    // Search by order number OR customer name/email
     if (search) {
         whereClause.OR = [
-            { reference: { contains: search, mode: 'insensitive' } },
+            { orderNumber: { contains: search, mode: 'insensitive' } },
             { 
                 customer: {
                     OR: [
@@ -115,7 +115,7 @@ const getSalesOrders = async (organizationId, { search, status, startDate, endDa
         skip: parseInt(offset, 10),
         include: {
             customer: { select: { name: true, email: true } },
-            lines: true
+            items: true
         },
         orderBy: { createdAt: 'desc' }
     });

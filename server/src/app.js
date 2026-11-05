@@ -1,3 +1,5 @@
+require('dotenv').config(); // Load .env before anything reads process.env (tests import app.js directly)
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');

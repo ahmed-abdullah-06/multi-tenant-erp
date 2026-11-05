@@ -3,7 +3,7 @@ const invitationService = require('./invitation.service');
 const sendInvite = async (req, res) => {
     try {
         const { email, role } = req.body;
-        const organizationId = req.tenant.id; 
+        const organizationId = req.tenantId; 
         const inviterId = req.user.id;
 
         const invitation = await invitationService.sendInvite(organizationId, inviterId, email, role);
@@ -35,7 +35,7 @@ const acceptInvite = async (req, res) => {
 
 const listInvitations = async (req, res) => {
     try {
-        const organizationId = req.tenant.id;
+        const organizationId = req.tenantId;
         const invitations = await invitationService.listInvitations(organizationId);
         
         res.status(200).json({ data: invitations });
@@ -47,7 +47,7 @@ const listInvitations = async (req, res) => {
 const revokeInvitation = async (req, res) => {
     try {
         const { id } = req.params;
-        const organizationId = req.tenant.id;
+        const organizationId = req.tenantId;
 
         await invitationService.revokeInvitation(organizationId, id);
         

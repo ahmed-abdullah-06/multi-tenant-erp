@@ -21,7 +21,7 @@ const resolveTenant = async (req, res, next) => {
                     organizationId: requestedOrgId
                 }
             },
-            include: { organization: true }
+            include: { organization: true, role: true }
         });
 
         if (!membership || membership.status !== 'ACTIVE' || membership.organization.status !== 'ACTIVE') {

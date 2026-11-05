@@ -41,7 +41,8 @@ async function main() {
         'inventory:read', 'inventory:write', 'purchasing:read', 'purchasing:write',
         'sales:read', 'sales:write', 'expenses:read', 'expenses:write',
         'reports:read', 'notifications:read', 'notifications:write',
-        'audit:read', 'billing:read', 'billing:write'
+        'audit:read', 'billing:read', 'billing:write',
+        'settings:read', 'settings:write', 'accounting:read', 'accounting:write'
     ];
 
     let role = await prisma.role.findFirst({

@@ -12,7 +12,7 @@ const createProduct = async (req, res, next) => {
 
 const getProducts = async (req, res) => {
     try {
-        const organizationId = req.tenant.id;
+        const organizationId = req.tenantId;
         // Pass req.query as the second argument
         const products = await inventoryService.getProducts(organizationId, req.query);
         res.status(200).json({ data: products });
