@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email - Nexus ERP</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1 id="auth-title">Verify Your Email</h1>
+        <p id="auth-subtitle">Confirming your email address...</p>
+      </div>
+
+      <div id="alert-message" class="alert-box" style="display: none;"></div>
+
+      <div id="verification-loading" style="text-align: center; padding: 2rem 0;">
+        <div style="display: inline-block; width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <style>
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        </style>
+      </div>
+
+      <div id="verification-success" style="display: none; text-align: center; padding: 2rem 0;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+        <p style="color: #10b981; font-weight: 600; font-size: 1.1rem; margin-bottom: 1rem;">Email Verified Successfully!</p>
+        <p style="color: #64748b; margin-bottom: 2rem;">Your email address has been confirmed. You can now log in to your account.</p>
+        <a href="/login.html" class="btn btn-primary btn-full">Continue to Login</a>
+      </div>
+
+      <div id="verification-error" style="display: none; text-align: center; padding: 2rem 0;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
+        <p style="color: #ef4444; font-weight: 600; font-size: 1.1rem; margin-bottom: 1rem;">Verification Failed</p>
+        <p id="error-message" style="color: #64748b; margin-bottom: 2rem;">The verification link is invalid or has expired.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+          <button type="button" id="resend-btn" class="btn btn-primary">Resend Verification Email</button>
+          <a href="/login.html" class="btn btn-outline">Back to Login</a>
+        </div>
+      </div>
+
+      <div id="resend-form" style="display: none; margin-top: 2rem;">
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 1.5rem 0;">
+        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">Enter your email to receive a new verification link:</p>
+        <form id="resend-email-form">
+          <div class="form-group">
+            <input type="email" id="resend-email" class="form-input" placeholder="Enter your email address" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">Send New Verification Link</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import apiClient from '/js/api/apiClient.js';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    const alertBox = document.getElementById('alert-message');
+    const loadingDiv = document.getElementById('verification-loading');
+    const successDiv = document.getElementById('verification-success');
+    const errorDiv = document.getElementById('verification-error');
+    const resendForm = document.getElementById('resend-form');
+    const resendBtn = document.getElementById('resend-btn');
+    const resendEmailForm = document.getElementById('resend-email-form');
+
+    function showAlert(message, type = 'error') {
+      alertBox.textContent = message;
+      alertBox.className = `alert-box alert-${type}`;
+      alertBox.style.display = 'block';
+    }
+
+    function hideAlert() {
+      alertBox.style.display = 'none';
+    }
+
+    async function verifyEmail() {
+      if (!token) {
+        showError('No verification token provided. Please check your email for the correct link.');
+        return;
+      }
+
+      try {
+        const response = await apiClient('/auth/verify-email', {
+          method: 'POST',
+          body: JSON.stringify({ token })
+        });
+
+        loadingDiv.style.display = 'none';
+        successDiv.style.display = 'block';
+        errorDiv.style.display = 'none';
+        resendForm.style.display = 'none';
+
+        document.getElementById('auth-title').textContent = 'Email Verified!';
+        document.getElementById('auth-subtitle').textContent = 'Your account is ready to use';
+
+      } catch (error) {
+        showError(error.message || 'Failed to verify email. The link may be invalid or expired.');
+      }
+    }
+
+    function showError(message) {
+      loadingDiv.style.display = 'none';
+      successDiv.style.display = 'none';
+      errorDiv.style.display = 'block';
+      resendForm.style.display = 'block';
+      document.getElementById('error-message').textContent = message;
+      document.getElementById('auth-title').textContent = 'Verification Failed';
+      document.getElementById('auth-subtitle').textContent = 'Unable to verify your email address';
+    }
+
+    resendBtn.addEventListener('click', () => {
+      resendForm.style.display = 'block';
+      document.getElementById('resend-email').focus();
+    });
+
+    resendEmailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('resend-email').value.trim();
+      
+      if (!email) {
+        showAlert('Please enter your email address');
+        return;
+      }
+
+      try {
+        await apiClient('/auth/resend-verification', {
+          method: 'POST',
+          body: JSON.stringify({ email })
+        });
+        
+        showAlert('If an account with that email exists, a new verification link has been sent.', 'success');
+        resendForm.style.display = 'none';
+      } catch (error) {
+        showAlert(error.message || 'Failed to send verification email');
+      }
+    });
+
+    // Start verification when page loads
+    verifyEmail();
+  </script>
+</body>
+</html>

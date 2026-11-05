@@ -29,40 +29,6 @@ const login = async (req, res, next) => {
         }
         next(error);
     }
-    // server/src/modules/auth/auth.controller.js
-
-    // Inside your login function, after verifying the password:
-    const membership = await prisma.organizationMember.findUnique({
-    where: { 
-        userId_organizationId: { 
-        userId: user.id, 
-        organizationId: activeOrgId // Assuming default or requested org
-        } 
-    },
-    include: { 
-        role: { 
-        include: { permissions: true } 
-        } 
-    }
-    });
-
-    // Flatten the permissions into a simple array of action strings
-    const permissions = membership.role.permissions.map(p => p.action);
-
-    // Send to client
-    res.status(200).json({
-    token,
-    user: {
-    id: user.id,
-    email: user.email,
-    name: user.name
-    },
-    access: {
-    roleId: membership.roleId,
-    roleName: membership.role.name, // e.g., 'Owner', 'Staff'
-    permissions: permissions        // e.g., ['read:inventory', 'write:sales', 'manage:users']
-    }
-    });
 };
 
 const refreshToken = async (req, res, next) => {
@@ -132,6 +98,34 @@ const resetPassword = async (req, res, next) => {
     }
 };
 
+const verifyEmail = async (req, res, next) => {
+    try {
+        const { token } = req.body;
+        
+        const result = await authService.verifyEmail(token);
+        
+        return successResponse(res, 200, 'Email verified successfully. You can now log in.', result);
+    } catch (error) {
+        if (error.message.includes('Invalid or expired') || error.message.includes('required')) {
+            return res.status(400).json({ error: error.message });
+        }
+        next(error);
+    }
+};
+
+const resendVerificationEmail = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const originUrl = req.headers.origin || `http://${req.headers.host}`;
+        
+        await authService.resendVerificationEmail(email, originUrl);
+        
+        return successResponse(res, 200, 'If an account with that email exists and is unverified, a verification link has been sent.');
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -139,5 +133,7 @@ module.exports = {
     logout,
     me,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    verifyEmail,
+    resendVerificationEmail
 };

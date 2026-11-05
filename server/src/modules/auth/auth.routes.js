@@ -15,7 +15,12 @@ router.post('/refresh', authLimiter, authController.refreshToken);
 router.post('/logout', requireAuth, authController.logout);
 router.get('/me', requireAuth, authController.me);
 
-router.post('/forgot-password', authLimiter, authController.forgotPassword);
-router.patch('/reset-password/:token', authLimiter, authController.resetPassword);
+// Add these to your public, unauthenticated routes
+router.post('/forgot-password', authController.forgotPassword);
+router.patch('/reset-password/:token', authController.resetPassword);
+
+// Email verification routes
+router.post('/verify-email', authLimiter, authController.verifyEmail);
+router.post('/resend-verification', authLimiter, authController.resendVerificationEmail);
 
 module.exports = router;

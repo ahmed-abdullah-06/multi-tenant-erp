@@ -92,6 +92,11 @@ model User {
   // Password Recovery Fields
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
+  
+  // Email Verification Fields
+  emailVerified            Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
 }
 
 model Membership {

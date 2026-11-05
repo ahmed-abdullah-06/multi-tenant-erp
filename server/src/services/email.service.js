@@ -151,6 +151,35 @@ const sendPasswordResetEmail = async ({ email, name, resetUrl, expireMinutes = 1
 };
 
 /**
+ * Send Email Verification Email
+ */
+const sendVerificationEmail = async ({ email, name, verificationUrl, expireHours = 24 }) => {
+    const title = 'Verify Your Nexus ERP Email Address';
+    const contentHtml = `
+      <h1>Welcome to Nexus ERP!</h1>
+      <p>Hi ${name || 'there'},</p>
+      <p>Thank you for registering with Nexus ERP. Please verify your email address by clicking the button below:</p>
+      <div style="text-align: center;">
+        <a href="${verificationUrl}" class="btn">Verify Email Address</a>
+      </div>
+      <p style="font-size: 13px; color: #64748b;">Or copy and paste this link into your browser:<br/><a href="${verificationUrl}" style="color: #38bdf8; word-break: break-all;">${verificationUrl}</a></p>
+      <div class="card">
+        <p style="margin: 0; font-size: 13px;">This verification link will expire in <strong>${expireHours} hours</strong>. If you did not create an account, you can safely ignore this email.</p>
+      </div>
+      <div class="card">
+        <p style="margin: 0; font-size: 13px; color: #94a3b8;">After verifying, you'll be able to log in and start using Nexus ERP.</p>
+      </div>
+    `;
+
+    return sendEmail({
+        to: email,
+        subject: 'Verify Your Email - Nexus ERP',
+        text: `Welcome to Nexus ERP! Please verify your email address: ${verificationUrl}. This link expires in ${expireHours} hours.`,
+        html: getEmailBaseTemplate(title, contentHtml)
+    });
+};
+
+/**
  * Send Subscription & Billing Alert Email
  */
 const sendBillingAlertEmail = async ({ email, organizationName, alertType, details, actionUrl }) => {
@@ -200,5 +229,6 @@ module.exports = {
     sendEmail,
     sendInvitationEmail,
     sendPasswordResetEmail,
+    sendVerificationEmail,
     sendBillingAlertEmail
 };

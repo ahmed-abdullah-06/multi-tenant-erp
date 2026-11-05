@@ -7,6 +7,7 @@ const emailService = require('../../services/email.service');
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_ACCESS_EXPIRES_IN = process.env.NODE_ENV === 'production' ? '15m' : '7d'; // Longer for dev
 const REFRESH_TOKEN_DAYS = 7; 
+const EMAIL_VERIFICATION_HOURS = 24; // 24 hours to verify email
 
 // --- Helper: Token Generation & Session Storage ---
 const generateSession = async (userId, ipAddress, userAgent) => {
@@ -125,6 +126,33 @@ const register = async ({ name, email, password }, ipAddress, userAgent) => {
 
         return { user, organization, membership };
     });
+
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    const verificationExpires = new Date(Date.now() + EMAIL_VERIFICATION_HOURS * 60 * 60 * 1000);
+
+    await prisma.user.update({
+        where: { id: result.user.id },
+        data: {
+            emailVerificationToken: verificationHash,
+            emailVerificationExpires: verificationExpires
+        }
+    });
+
+    // Send verification email
+    const verificationUrl = `${process.env.APP_URL || 'http://localhost:5000'}/verify-email.html?token=${verificationToken}`;
+    try {
+        await emailService.sendVerificationEmail({
+            email: result.user.email,
+            name: result.user.name,
+            verificationUrl,
+            expireHours: EMAIL_VERIFICATION_HOURS
+        });
+    } catch (emailError) {
+        // Don't fail registration if email fails
+        console.warn('Failed to send verification email:', emailError.message);
+    }
 
     const { accessToken, refreshToken } = await generateSession(result.user.id, ipAddress, userAgent);
 
@@ -334,6 +362,80 @@ const getCurrentUser = async (userId) => {
     };
 };
 
+const verifyEmail = async (token) => {
+    if (!token) {
+        throw new Error('Verification token is required');
+    }
+
+    // Hash the incoming token to compare with the database
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Find user with valid, unexpired token
+    const user = await prisma.user.findFirst({
+        where: {
+            emailVerificationToken: hashedToken,
+            emailVerificationExpires: { gt: new Date() }
+        }
+    });
+
+    if (!user) {
+        throw new Error('Invalid or expired verification token');
+    }
+
+    // Update user: mark as verified and clear token
+    await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            emailVerified: true,
+            emailVerificationToken: null,
+            emailVerificationExpires: null
+        }
+    });
+
+    return { email: user.email, name: user.name };
+};
+
+const resendVerificationEmail = async (email, originUrl) => {
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    
+    if (!user) {
+        // Return silently to prevent email enumeration
+        return true;
+    }
+
+    if (user.emailVerified) {
+        return true; // Already verified
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    const verificationExpires = new Date(Date.now() + EMAIL_VERIFICATION_HOURS * 60 * 60 * 1000);
+
+    await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            emailVerificationToken: verificationHash,
+            emailVerificationExpires: verificationExpires
+        }
+    });
+
+    // Send verification email
+    const verificationUrl = `${originUrl}/verify-email.html?token=${verificationToken}`;
+    try {
+        await emailService.sendVerificationEmail({
+            email: user.email,
+            name: user.name,
+            verificationUrl,
+            expireHours: EMAIL_VERIFICATION_HOURS
+        });
+    } catch (emailError) {
+        console.warn('Failed to send verification email:', emailError.message);
+    }
+
+    return true;
+};
+
 const forgotPassword = async (email, originUrl) => {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -415,5 +517,7 @@ module.exports = {
     logout,
     getCurrentUser,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    verifyEmail,
+    resendVerificationEmail
 };
