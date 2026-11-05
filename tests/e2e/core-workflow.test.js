@@ -59,7 +59,7 @@ describe('E2E: Core ERP Business Workflow', () => {
         await cleanupTestData();
         await prisma.$disconnect();
         if (redis) {
-            await redis.quit();
+            await redis.quit().catch(() => {});
         }
     });
 

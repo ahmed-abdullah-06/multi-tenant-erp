@@ -6,6 +6,19 @@ let transporterInstance = null;
 const getTransporter = () => {
     if (transporterInstance) return transporterInstance;
 
+    // Tests must never open real SMTP connections: a Gmail TLS socket left
+    // in flight at teardown keeps Jest workers from exiting gracefully.
+    // Test assertions read tokens/state from the DB, not from delivered mail.
+    if (process.env.NODE_ENV === 'test') {
+        transporterInstance = {
+            sendMail: async (mailOptions) => {
+                logger.info(`[EmailService TEST] Simulated send to ${mailOptions.to}: "${mailOptions.subject}"`);
+                return { messageId: `test-${Date.now()}`, ...mailOptions };
+            }
+        };
+        return transporterInstance;
+    }
+
     if (process.env.SMTP_HOST) {
         transporterInstance = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
