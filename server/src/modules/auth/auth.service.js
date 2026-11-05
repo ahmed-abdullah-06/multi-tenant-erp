@@ -140,17 +140,21 @@ const register = async ({ name, email, password }, ipAddress, userAgent) => {
         }
     });
 
-    // Send verification email
+    // Send verification email without blocking registration — SMTP can take seconds
     const verificationUrl = `${process.env.APP_URL || 'http://localhost:5000'}/verify-email.html?token=${verificationToken}`;
     try {
-        await emailService.sendVerificationEmail({
-            email: result.user.email,
-            name: result.user.name,
-            verificationUrl,
-            expireHours: EMAIL_VERIFICATION_HOURS
+        Promise.resolve(
+            emailService.sendVerificationEmail({
+                email: result.user.email,
+                name: result.user.name,
+                verificationUrl,
+                expireHours: EMAIL_VERIFICATION_HOURS
+            })
+        ).catch((emailError) => {
+            // Don't fail registration if email fails
+            console.warn('Failed to send verification email:', emailError.message);
         });
     } catch (emailError) {
-        // Don't fail registration if email fails
         console.warn('Failed to send verification email:', emailError.message);
     }
 
@@ -420,14 +424,18 @@ const resendVerificationEmail = async (email, originUrl) => {
         }
     });
 
-    // Send verification email
+    // Send verification email without blocking the response — SMTP can take seconds
     const verificationUrl = `${originUrl}/verify-email.html?token=${verificationToken}`;
     try {
-        await emailService.sendVerificationEmail({
-            email: user.email,
-            name: user.name,
-            verificationUrl,
-            expireHours: EMAIL_VERIFICATION_HOURS
+        Promise.resolve(
+            emailService.sendVerificationEmail({
+                email: user.email,
+                name: user.name,
+                verificationUrl,
+                expireHours: EMAIL_VERIFICATION_HOURS
+            })
+        ).catch((emailError) => {
+            console.warn('Failed to send verification email:', emailError.message);
         });
     } catch (emailError) {
         console.warn('Failed to send verification email:', emailError.message);
@@ -463,15 +471,23 @@ const forgotPassword = async (email, originUrl) => {
         }
     });
 
-    // 4. Send the email with the unhashed token
+    // 4. Send the email with the unhashed token (non-blocking — SMTP can take seconds)
     const resetUrl = `${originUrl}/reset-password.html?token=${resetToken}`;
 
-    await emailService.sendPasswordResetEmail({
-        email: user.email,
-        name: user.name,
-        resetUrl,
-        expireMinutes: 15
-    });
+    try {
+        Promise.resolve(
+            emailService.sendPasswordResetEmail({
+                email: user.email,
+                name: user.name,
+                resetUrl,
+                expireMinutes: 15
+            })
+        ).catch((emailError) => {
+            console.warn('Failed to send password reset email:', emailError.message);
+        });
+    } catch (emailError) {
+        console.warn('Failed to send password reset email:', emailError.message);
+    }
 
     return true;
 };
