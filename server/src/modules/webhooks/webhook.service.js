@@ -105,12 +105,18 @@ const sendWebhookEvent = async (organizationId, event, data) => {
     const endpoints = await prisma.webhookEndpoint.findMany({
         where: {
             organizationId,
-            isActive: true,
-            events: { contains: event }
+            isActive: true
         }
     });
-    
-    if (endpoints.length === 0) {
+
+    // `events` is a Json field (e.g. ["order.created", "stock.low"]) so matching
+    // is done in JS — Prisma's `contains` only works on String fields. "*" subscribes to all.
+    const matching = endpoints.filter((endpoint) => {
+        const subscribed = Array.isArray(endpoint.events) ? endpoint.events : [];
+        return subscribed.includes(event) || subscribed.includes('*');
+    });
+
+    if (matching.length === 0) {
         return;
     }
     
@@ -123,7 +129,7 @@ const sendWebhookEvent = async (organizationId, event, data) => {
     };
     
     // Send to all endpoints in parallel
-    await Promise.allSettled(endpoints.map(async (endpoint) => {
+    await Promise.allSettled(matching.map(async (endpoint) => {
         try {
             const signature = crypto
                 .createHmac('sha256', endpoint.secret)
@@ -227,11 +233,19 @@ const processWebhook = async ({ url, secret, payload, eventType, endpointId, org
     }
 };
 
+// Fire-and-forget wrapper so a webhook failure can never break a business operation
+const dispatchWebhookEvent = (organizationId, event, data) => {
+    sendWebhookEvent(organizationId, event, data).catch((err) => {
+        console.warn(`[Webhook] Dispatch failed for ${event}: ${err.message}`);
+    });
+};
+
 module.exports = {
     createWebhookEndpoint,
     listWebhookEndpoints,
     updateWebhookEndpoint,
     deleteWebhookEndpoint,
     sendWebhookEvent,
+    dispatchWebhookEvent,
     processWebhook
 };

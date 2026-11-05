@@ -1,5 +1,6 @@
 const prisma = require('../../lib/prisma');
 const { emitTenantEvent } = require('../../lib/socket');
+const { dispatchWebhookEvent } = require('../webhooks/webhook.service');
 const auditService = require('../audit/audit.service');
 
 const createProduct = async (tenantId, productData) => {
@@ -59,13 +60,15 @@ const adjustStock = async (tenantId, productId, quantityChange) => {
         const prod = await prisma.product.findUnique({ where: { id: productId } });
         if (prod) {
             if (prod.stock <= (prod.minStockLevel || 0)) {
-                emitTenantEvent(tenantId, 'stock:low', {
+                const lowStockPayload = {
                     productId: prod.id,
                     productName: prod.name,
                     sku: prod.sku,
                     stock: prod.stock,
                     minStockLevel: prod.minStockLevel
-                });
+                };
+                emitTenantEvent(tenantId, 'stock:low', lowStockPayload);
+                dispatchWebhookEvent(tenantId, 'stock.low', lowStockPayload);
             }
             emitTenantEvent(tenantId, 'stock:updated', {
                 productId: prod.id,
@@ -244,14 +247,16 @@ const adjustStockSafely = async (tenantId, balanceId, currentVersion, quantityCh
         });
         if (balance && balance.product) {
             if (balance.quantity <= (balance.product.minStockLevel || 0)) {
-                emitTenantEvent(tenantId, 'stock:low', {
+                const lowStockPayload = {
                     productId: balance.product.id,
                     productName: balance.product.name,
                     sku: balance.product.sku,
                     stock: balance.quantity,
                     minStockLevel: balance.product.minStockLevel,
                     warehouseId: balance.warehouseId
-                });
+                };
+                emitTenantEvent(tenantId, 'stock:low', lowStockPayload);
+                dispatchWebhookEvent(tenantId, 'stock.low', lowStockPayload);
             }
             emitTenantEvent(tenantId, 'stock:updated', {
                 productId: balance.productId,

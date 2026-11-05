@@ -1,5 +1,6 @@
 const prisma = require('../../lib/prisma');
 const { emitTenantEvent } = require('../../lib/socket');
+const { dispatchWebhookEvent } = require('../webhooks/webhook.service');
 
 // Customers
 const getCustomers = async (tenantId) => {
@@ -141,7 +142,7 @@ const createSalesOrder = async (tenantId, { customerId, orderNumber, notes, item
         };
     });
 
-    return await prisma.salesOrder.create({
+    const order = await prisma.salesOrder.create({
         data: {
             organizationId: tenantId,
             customerId,
@@ -155,11 +156,23 @@ const createSalesOrder = async (tenantId, { customerId, orderNumber, notes, item
         },
         include: { items: true, customer: true }
     });
+
+    dispatchWebhookEvent(tenantId, 'order.created', {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        customerId: order.customerId,
+        totalAmount: order.totalAmount,
+        status: order.status
+    });
+
+    return order;
 };
 
 // Fulfilling / Shipping Sales Order: checks stock, decreases stock atomically, logs stock movement
 const fulfillSalesOrder = async (tenantId, orderId, { warehouseId }) => {
-    return await prisma.$transaction(async (tx) => {
+    const lowStockPayloads = [];
+
+    const result = await prisma.$transaction(async (tx) => {
         const so = await tx.salesOrder.findFirst({
             where: { id: orderId, organizationId: tenantId },
             include: { items: true }
@@ -247,13 +260,15 @@ const fulfillSalesOrder = async (tenantId, orderId, { warehouseId }) => {
                 });
                 if (prod) {
                     if (prod.stock <= (prod.minStockLevel || 0)) {
-                        emitTenantEvent(tenantId, 'stock:low', {
+                        const lowStockPayload = {
                             productId: prod.id,
                             productName: prod.name,
                             sku: prod.sku,
                             stock: prod.stock,
                             minStockLevel: prod.minStockLevel
-                        });
+                        };
+                        emitTenantEvent(tenantId, 'stock:low', lowStockPayload);
+                        lowStockPayloads.push(lowStockPayload);
                     }
                     emitTenantEvent(tenantId, 'stock:updated', {
                         productId: prod.id,
@@ -271,8 +286,22 @@ const fulfillSalesOrder = async (tenantId, orderId, { warehouseId }) => {
             invoiceId: invoice.id
         });
 
-        return { salesOrderId: so.id, status: 'SHIPPED', invoice };
+        return { salesOrderId: so.id, orderNumber: so.orderNumber, status: 'SHIPPED', invoice };
     });
+
+    // Webhooks fire only after the transaction has committed
+    dispatchWebhookEvent(tenantId, 'order.fulfilled', {
+        orderId: result.salesOrderId,
+        orderNumber: result.orderNumber,
+        invoiceId: result.invoice.id,
+        totalAmount: result.invoice.totalAmount,
+        status: result.status
+    });
+    for (const payload of lowStockPayloads) {
+        dispatchWebhookEvent(tenantId, 'stock.low', payload);
+    }
+
+    return result;
 };
 
 const cancelSalesOrder = async (tenantId, orderId) => {
@@ -307,7 +336,7 @@ const getInvoiceById = async (tenantId, invoiceId) => {
 };
 
 const recordPayment = async (tenantId, invoiceId, { amount, paymentMethod, reference }) => {
-    return await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
         const invoice = await tx.invoice.findFirst({
             where: { id: invoiceId, organizationId: tenantId }
         });
@@ -336,8 +365,20 @@ const recordPayment = async (tenantId, invoiceId, { amount, paymentMethod, refer
             }
         });
 
-        return payment;
+        return { payment, invoiceStatus: newStatus, invoiceNumber: invoice.invoiceNumber, paidAmount: newPaidAmount, totalAmount: invoice.totalAmount };
     });
+
+    // Webhook fires only after the transaction has committed
+    if (result.invoiceStatus === 'PAID') {
+        dispatchWebhookEvent(tenantId, 'invoice.paid', {
+            invoiceId,
+            invoiceNumber: result.invoiceNumber,
+            amountPaid: result.paidAmount,
+            totalAmount: result.totalAmount
+        });
+    }
+
+    return result.payment;
 };
 
 module.exports = {

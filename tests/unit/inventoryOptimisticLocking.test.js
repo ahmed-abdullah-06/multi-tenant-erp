@@ -11,6 +11,10 @@ jest.mock('../../server/src/lib/prisma', () => ({
     product: {
         updateMany: jest.fn(),
         findUnique: jest.fn()
+    },
+    webhookEndpoint: {
+        // dispatchWebhookEvent runs on stock.low — resolve to "no endpoints" in unit tests
+        findMany: jest.fn().mockResolvedValue([])
     }
 }));
 

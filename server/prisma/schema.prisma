@@ -865,6 +865,7 @@ model WebhookEndpoint {
   url            String
   secret         String
   events         Json // e.g. ["invoice.created", "stock.low"]
+  description    String?
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

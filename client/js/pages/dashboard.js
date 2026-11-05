@@ -1428,7 +1428,7 @@ async function renderIntegrationsView(container) {
   container.querySelector("#create-webhook-btn").addEventListener("click", async () => {
     const url = await ui.showPrompt("Endpoint URL (must be HTTPS):", "https://");
     if (!url || !url.trim()) return;
-    const eventsRaw = await ui.showPrompt("Events (comma-separated):", "order.created,order.fulfilled,stock.low");
+    const eventsRaw = await ui.showPrompt("Events (comma-separated):", "order.created,order.fulfilled,stock.low,invoice.paid");
     if (!eventsRaw) return;
     try {
       await apiClient("/webhooks", {
