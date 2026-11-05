@@ -10,6 +10,9 @@ const menuConfig = [
   { label: 'Reports', icon: '📈', path: '#reports', section: 'reports', reqPerm: 'read:reports' },
   { label: 'Audit Logs', icon: '🛡️', path: '#audit', section: 'audit', reqPerm: 'read:audit' },
   { label: 'General Ledger', icon: '📒', path: '#ledger', section: 'ledger', reqPerm: 'read:accounting' },
+  { label: 'Notifications', icon: '🔔', path: '#notifications', section: 'notifications', reqPerm: 'read:notifications' },
+  { label: 'Roles & Access', icon: '🔐', path: '#roles', section: 'roles', reqPerm: 'read:rbac' },
+  { label: 'Integrations', icon: '🔌', path: '#integrations', section: 'integrations', reqPerm: 'read:billing' },
   { label: 'Settings', icon: '⚙️', path: '#settings', section: 'settings', reqPerm: 'manage:system' }
 ];
 

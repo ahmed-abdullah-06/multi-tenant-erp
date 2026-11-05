@@ -128,6 +128,15 @@ async function renderView(viewName) {
       case "settings":
         await renderSettingsView(container);
         break;
+      case "notifications":
+        await renderNotificationsView(container);
+        break;
+      case "integrations":
+        await renderIntegrationsView(container);
+        break;
+      case "roles":
+        await renderRolesView(container);
+        break;
       default:
         container.innerHTML = `<h3>View not found</h3>`;
     }
@@ -1157,6 +1166,411 @@ async function renderSettingsView(container) {
       }
     });
   });
+}
+
+// ---------------- NOTIFICATIONS VIEW ----------------
+async function renderNotificationsView(container) {
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700;">Notifications</h1>
+        <p style="color: #64748b;">Real-time alerts and system events for your account</p>
+      </div>
+      <button id="mark-all-read-btn" class="btn btn-secondary">Mark All as Read</button>
+    </div>
+    <div class="data-card">
+      <div id="notifications-list" style="padding: 1rem;">
+        <p style="color: #64748b; text-align: center; padding: 2rem;">Loading notifications...</p>
+      </div>
+    </div>
+  `;
+
+  const listEl = container.querySelector("#notifications-list");
+
+  const loadNotifications = async () => {
+    try {
+      const res = await apiClient("/notifications");
+      const notifications = res.data || [];
+
+      if (notifications.length === 0) {
+        listEl.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">You're all caught up! No notifications yet.</p>`;
+        return;
+      }
+
+      const typeColors = {
+        INFO: { bg: "rgba(59, 130, 246, 0.15)", fg: "#60a5fa" },
+        SUCCESS: { bg: "rgba(16, 185, 129, 0.15)", fg: "#34d399" },
+        WARNING: { bg: "rgba(245, 158, 11, 0.15)", fg: "#fbbf24" },
+        ERROR: { bg: "rgba(239, 68, 68, 0.15)", fg: "#f87171" }
+      };
+
+      listEl.innerHTML = notifications.map(n => {
+        const colors = typeColors[n.type] || typeColors.INFO;
+        return `
+          <div class="notification-item" data-id="${n.id}" style="
+            display: flex; align-items: flex-start; gap: 1rem;
+            padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: ${n.isRead ? "transparent" : "rgba(59, 130, 246, 0.04)"};
+            opacity: ${n.isRead ? "0.7" : "1"};
+          ">
+            <span style="
+              flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%;
+              background: ${n.isRead ? "#475569" : colors.fg};
+              margin-top: 0.5rem;
+            "></span>
+            <div style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                <strong style="color: #f8fafc; font-size: 0.95rem;">${n.title}</strong>
+                <span style="font-size: 0.75rem; color: #64748b; white-space: nowrap;">${new Date(n.createdAt).toLocaleString()}</span>
+              </div>
+              <p style="color: #94a3b8; font-size: 0.875rem; margin: 0.25rem 0 0;">${n.message}</p>
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem;">
+                <span style="font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: ${colors.bg}; color: ${colors.fg};">${n.type}</span>
+                ${!n.isRead ? `<button class="mark-read-btn" data-id="${n.id}" style="background: none; border: none; color: #60a5fa; font-size: 0.75rem; cursor: pointer; padding: 0;">Mark as read</button>` : ""}
+                ${n.link ? `<a href="${n.link}" style="color: #60a5fa; font-size: 0.75rem;">View details →</a>` : ""}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      listEl.querySelectorAll(".mark-read-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          try {
+            await apiClient(`/notifications/${btn.dataset.id}/read`, { method: "PATCH" });
+            loadNotifications();
+          } catch (err) {
+            ui.showToast(err.message || "Failed to mark as read", "error");
+          }
+        });
+      });
+    } catch (err) {
+      listEl.innerHTML = `<div class="alert-box alert-error" style="display: block;">Failed to load notifications: ${err.message}</div>`;
+    }
+  };
+
+  container.querySelector("#mark-all-read-btn").addEventListener("click", async () => {
+    try {
+      await apiClient("/notifications/read-all", { method: "PATCH" });
+      ui.showToast("All notifications marked as read", "success");
+      loadNotifications();
+    } catch (err) {
+      ui.showToast(err.message || "Failed to mark all as read", "error");
+    }
+  });
+
+  await loadNotifications();
+}
+
+// ---------------- INTEGRATIONS VIEW (API Keys + Webhooks) ----------------
+async function renderIntegrationsView(container) {
+  container.innerHTML = `
+    <div style="margin-bottom: 1.5rem;">
+      <h1 style="font-size: 1.75rem; font-weight: 700;">Developer Integrations</h1>
+      <p style="color: #64748b;">Manage API keys and outbound webhook endpoints</p>
+    </div>
+
+    <section class="data-card" style="margin-bottom: 1.5rem;">
+      <div class="data-card__header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="data-card__title">API Keys</span>
+        <button id="create-apikey-btn" class="btn btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">+ New API Key</button>
+      </div>
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Key Prefix</th>
+              <th>Last Used</th>
+              <th>Expires</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="apikey-table-body">
+            <tr><td colspan="6" style="text-align: center; color: #64748b;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="data-card">
+      <div class="data-card__header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="data-card__title">Webhook Endpoints</span>
+        <button id="create-webhook-btn" class="btn btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">+ New Endpoint</button>
+      </div>
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>URL</th>
+              <th>Events</th>
+              <th>Status</th>
+              <th>Last Delivery</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="webhook-table-body">
+            <tr><td colspan="5" style="text-align: center; color: #64748b;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div id="new-apikey-key" style="display: none; margin-top: 1.5rem;"></div>
+  `;
+
+  const apiKeyBody = container.querySelector("#apikey-table-body");
+  const webhookBody = container.querySelector("#webhook-table-body");
+
+  const loadApiKeys = async () => {
+    try {
+      const res = await apiClient("/apikeys");
+      const keys = res.data || [];
+      if (keys.length === 0) {
+        apiKeyBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b;">No API keys created yet.</td></tr>`;
+        return;
+      }
+      apiKeyBody.innerHTML = keys.map(k => `
+        <tr>
+          <td><strong>${k.name}</strong></td>
+          <td><code style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">${k.prefix}...</code></td>
+          <td>${k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString() : "<span style='color:#64748b;'>Never</span>"}</td>
+          <td>${k.expiresAt ? new Date(k.expiresAt).toLocaleDateString() : "Never"}</td>
+          <td>${new Date(k.createdAt).toLocaleDateString()}</td>
+          <td><button class="revoke-key-btn btn btn-secondary" data-id="${k.id}" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; color: #f87171;">Revoke</button></td>
+        </tr>
+      `).join("");
+
+      apiKeyBody.querySelectorAll(".revoke-key-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Revoke this API key? Applications using it will stop working immediately.")) return;
+          try {
+            await apiClient(`/apikeys/${btn.dataset.id}`, { method: "DELETE" });
+            ui.showToast("API key revoked", "success");
+            loadApiKeys();
+          } catch (err) {
+            ui.showToast(err.message || "Failed to revoke key", "error");
+          }
+        });
+      });
+    } catch (err) {
+      apiKeyBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #f87171;">Failed to load API keys: ${err.message}</td></tr>`;
+    }
+  };
+
+  const loadWebhooks = async () => {
+    try {
+      const res = await apiClient("/webhooks");
+      const hooks = res.data || [];
+      if (hooks.length === 0) {
+        webhookBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">No webhook endpoints configured yet.</td></tr>`;
+        return;
+      }
+      webhookBody.innerHTML = hooks.map(h => `
+        <tr>
+          <td><code style="font-size: 0.8rem; word-break: break-all;">${h.url}</code></td>
+          <td>${(h.events || []).map(e => `<span class="badge badge-info" style="margin-right: 4px;">${e}</span>`).join("") || "-"}</td>
+          <td><span class="badge ${h.isActive ? "badge-success" : "badge-secondary"}">${h.isActive ? "Active" : "Disabled"}</span></td>
+          <td>${h.lastDeliveryAt ? new Date(h.lastDeliveryAt).toLocaleString() : "<span style='color:#64748b;'>Never</span>"}</td>
+          <td><button class="delete-webhook-btn btn btn-secondary" data-id="${h.id}" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; color: #f87171;">Delete</button></td>
+        </tr>
+      `).join("");
+
+      webhookBody.querySelectorAll(".delete-webhook-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Delete this webhook endpoint?")) return;
+          try {
+            await apiClient(`/webhooks/${btn.dataset.id}`, { method: "DELETE" });
+            ui.showToast("Webhook endpoint deleted", "success");
+            loadWebhooks();
+          } catch (err) {
+            ui.showToast(err.message || "Failed to delete endpoint", "error");
+          }
+        });
+      });
+    } catch (err) {
+      webhookBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #f87171;">Failed to load webhooks: ${err.message}</td></tr>`;
+    }
+  };
+
+  container.querySelector("#create-apikey-btn").addEventListener("click", async () => {
+    const name = await ui.showPrompt("API Key Name:", "My Integration");
+    if (!name || !name.trim()) return;
+    try {
+      const res = await apiClient("/apikeys", {
+        method: "POST",
+        body: JSON.stringify({ name: name.trim() })
+      });
+      const plainKey = res.data?.apiKey;
+      if (plainKey) {
+        const keyBox = container.querySelector("#new-apikey-key");
+        keyBox.style.display = "block";
+        keyBox.innerHTML = `
+          <div class="alert-box alert-success" style="display: block;">
+            <strong>Copy your API key now — it will not be shown again.</strong>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+              <code style="flex: 1; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px; word-break: break-all;">${plainKey}</code>
+              <button id="copy-apikey-btn" class="btn btn-secondary" style="flex-shrink: 0;">Copy</button>
+            </div>
+          </div>
+        `;
+        keyBox.querySelector("#copy-apikey-btn").addEventListener("click", () => {
+          navigator.clipboard.writeText(plainKey).then(() => ui.showToast("API key copied", "success"));
+        });
+      }
+      loadApiKeys();
+    } catch (err) {
+      ui.showToast(err.message || "Failed to create API key", "error");
+    }
+  });
+
+  container.querySelector("#create-webhook-btn").addEventListener("click", async () => {
+    const url = await ui.showPrompt("Endpoint URL (must be HTTPS):", "https://");
+    if (!url || !url.trim()) return;
+    const eventsRaw = await ui.showPrompt("Events (comma-separated):", "order.created,order.fulfilled,stock.low");
+    if (!eventsRaw) return;
+    try {
+      await apiClient("/webhooks", {
+        method: "POST",
+        body: JSON.stringify({
+          url: url.trim(),
+          events: eventsRaw.split(",").map(e => e.trim()).filter(Boolean)
+        })
+      });
+      ui.showToast("Webhook endpoint created", "success");
+      loadWebhooks();
+    } catch (err) {
+      ui.showToast(err.message || "Failed to create webhook", "error");
+    }
+  });
+
+  await Promise.all([loadApiKeys(), loadWebhooks()]);
+}
+
+// ---------------- ROLES & PERMISSIONS VIEW ----------------
+async function renderRolesView(container) {
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700;">Roles & Permissions</h1>
+        <p style="color: #64748b;">Role-based access control for your organization</p>
+      </div>
+      <button id="create-role-btn" class="btn btn-primary">+ New Role</button>
+    </div>
+
+    <div class="data-card" style="margin-bottom: 1.5rem;">
+      <div class="data-card__header">
+        <span class="data-card__title">Roles</span>
+      </div>
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Description</th>
+              <th>Members</th>
+              <th>Permissions</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="roles-table-body">
+            <tr><td colspan="5" style="text-align: center; color: #64748b;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="data-card">
+      <div class="data-card__header">
+        <span class="data-card__title">Available Permissions</span>
+      </div>
+      <div id="permissions-list" style="padding: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        <span style="color: #64748b;">Loading...</span>
+      </div>
+    </div>
+  `;
+
+  const rolesBody = container.querySelector("#roles-table-body");
+  const permsList = container.querySelector("#permissions-list");
+
+  const loadRoles = async () => {
+    try {
+      const res = await apiClient("/rbac/roles");
+      const roles = res.data || [];
+      if (roles.length === 0) {
+        rolesBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">No roles found.</td></tr>`;
+        return;
+      }
+      rolesBody.innerHTML = roles.map(r => {
+        const perms = (r.permissions || []).map(p => p.permission?.action || p.action).filter(Boolean);
+        const memberCount = r._count?.memberships ?? r.memberCount ?? 0;
+        return `
+          <tr>
+            <td><strong>${r.name}</strong>${r.isSystem ? ' <span class="badge badge-info">System</span>' : ""}</td>
+            <td style="color: #94a3b8;">${r.description || "-"}</td>
+            <td>${memberCount}</td>
+            <td>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px; max-width: 420px;">
+                ${perms.slice(0, 6).map(p => `<span class="badge badge-secondary" style="font-size: 0.7rem;">${p}</span>`).join("")}
+                ${perms.length > 6 ? `<span style="color: #64748b; font-size: 0.75rem;">+${perms.length - 6} more</span>` : ""}
+              </div>
+            </td>
+            <td>
+              ${!r.isSystem ? `<button class="delete-role-btn btn btn-secondary" data-id="${r.id}" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; color: #f87171;">Delete</button>` : ""}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      rolesBody.querySelectorAll(".delete-role-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Delete this role? Members using it will lose their permissions.")) return;
+          try {
+            await apiClient(`/rbac/roles/${btn.dataset.id}`, { method: "DELETE" });
+            ui.showToast("Role deleted", "success");
+            loadRoles();
+          } catch (err) {
+            ui.showToast(err.message || "Failed to delete role", "error");
+          }
+        });
+      });
+    } catch (err) {
+      rolesBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #f87171;">Failed to load roles: ${err.message}</td></tr>`;
+    }
+  };
+
+  const loadPermissions = async () => {
+    try {
+      const res = await apiClient("/rbac/permissions");
+      const permissions = res.data || [];
+      permsList.innerHTML = permissions.length === 0
+        ? `<span style="color: #64748b;">No permissions defined.</span>`
+        : permissions.map(p => `
+            <span class="badge badge-secondary" style="font-size: 0.75rem; padding: 4px 10px;" title="${p.description || ""}">${p.action}</span>
+          `).join("");
+    } catch (err) {
+      permsList.innerHTML = `<span style="color: #f87171;">Failed to load permissions: ${err.message}</span>`;
+    }
+  };
+
+  container.querySelector("#create-role-btn").addEventListener("click", async () => {
+    const name = await ui.showPrompt("Role Name:", "Warehouse Manager");
+    if (!name || !name.trim()) return;
+    const description = await ui.showPrompt("Description (optional):", "");
+    try {
+      await apiClient("/rbac/roles", {
+        method: "POST",
+        body: JSON.stringify({ name: name.trim(), description: description || undefined })
+      });
+      ui.showToast("Role created", "success");
+      loadRoles();
+    } catch (err) {
+      ui.showToast(err.message || "Failed to create role", "error");
+    }
+  });
+
+  await Promise.all([loadRoles(), loadPermissions()]);
 }
 
 export const initDashboard = async () => {
