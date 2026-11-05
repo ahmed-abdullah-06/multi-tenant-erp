@@ -123,7 +123,7 @@ The API spec includes:
 npm install
 
 # Configure environment variables
-cp server/.env.example .env
+cp .env.example .env
 # then fill in DATABASE_URL, JWT_SECRET, JWT_EXPIRES_IN
 
 # Generate Prisma client and run migrations
@@ -141,12 +141,18 @@ The app serves both the API and the static frontend from the same server:
 
 ### Environment Variables
 
+See [`.env.example`](.env.example) for the full annotated list. The essentials:
+
 | Variable | Description |
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `JWT_SECRET` | Secret used to sign JWTs — required, no default |
 | `JWT_EXPIRES_IN` | Token expiry (e.g. `1d`) |
 | `PORT` | Server port (defaults to 5000) |
+
+## Deployment
+
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** for the full production checklist: provisioning, environment variables, `prisma migrate deploy`, Stripe/webhook setup, HTTPS, monitoring, security review, and rollback plan.
 
 ## Security Notes
 
