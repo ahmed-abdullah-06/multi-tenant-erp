@@ -1,6 +1,7 @@
 import apiClient from "../api/apiClient.js";
 import { getOrganizationId, setOrganizationId, clearState } from "../state/store.js";
 import { ui } from "../ui.js";
+import globalSearch from "./search.js";
 
 export async function renderNavbar(user) {
   const navbarContainer = document.getElementById("navbar-container");
@@ -27,6 +28,13 @@ export async function renderNavbar(user) {
       </div>
       <div class="navbar__right">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button id="search-trigger-btn" data-search-trigger class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.4rem;" title="Search (Ctrl+K)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            Search
+          </button>
           <span style="font-size: 0.875rem; font-weight: 500; color: #1e293b;" id="user-greeting">
             ${user?.name || "User"}
           </span>
