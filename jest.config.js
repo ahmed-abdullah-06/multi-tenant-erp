@@ -9,6 +9,7 @@ module.exports = {
   testMatch: [
     '**/tests/**/*.test.js'
   ],
+  globalSetup: '<rootDir>/tests/globalSetup.js',
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.js'],
   verbose: true
 };

@@ -71,20 +71,20 @@ const register = async ({ name, email, password }, ipAddress, userAgent) => {
         });
 
         const permissions = [
-            'read:users', 'write:users',
-            'read:organizations', 'write:organizations',
-            'read:rbac', 'write:rbac',
-            'read:employees', 'write:employees',
-            'read:inventory', 'write:inventory',
-            'read:purchasing', 'write:purchasing',
-            'read:sales', 'write:sales',
-            'read:expenses', 'write:expenses',
-            'read:reports',
-            'read:notifications', 'write:notifications',
-            'read:audit',
-            'read:billing', 'write:billing',
-            'read:accounting', 'write:accounting',
-            'manage:system'
+            'users:read', 'users:write',
+            'organizations:read', 'organizations:write',
+            'rbac:read', 'rbac:write',
+            'employees:read', 'employees:write',
+            'inventory:read', 'inventory:write',
+            'purchasing:read', 'purchasing:write',
+            'sales:read', 'sales:write',
+            'expenses:read', 'expenses:write',
+            'reports:read',
+            'notifications:read', 'notifications:write',
+            'audit:read',
+            'billing:read', 'billing:write',
+            'accounting:read', 'accounting:write',
+            'settings:read', 'settings:write'
         ];
 
         for (const action of permissions) {
