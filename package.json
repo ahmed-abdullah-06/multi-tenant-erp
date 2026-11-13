@@ -12,6 +12,8 @@
     "start": "node server/src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "node server/prisma/seed.js",
+    "seed": "node server/prisma/seed.js",
     "test": "cross-env NODE_ENV=test jest",
     "test:unit": "cross-env NODE_ENV=test jest tests/unit",
     "test:integration": "cross-env NODE_ENV=test jest tests/integration",

@@ -65,12 +65,19 @@ module.exports = async () => {
 
         for (const action of permissions) {
             const moduleName = action.split(':')[0];
-            const perm = await prisma.permission.upsert({
-                where: { action },
-                update: {},
-                create: { action, module: moduleName, description: `Permission for ${action}` }
+            
+            // Find or create permission
+            let perm = await prisma.permission.findUnique({
+                where: { action }
             });
+            
+            if (!perm) {
+                perm = await prisma.permission.create({
+                    data: { action, module: moduleName, description: `Permission for ${action}` }
+                });
+            }
 
+            // Link permission to role if not already linked
             const linked = await prisma.rolePermission.findUnique({
                 where: { roleId_permissionId: { roleId: role.id, permissionId: perm.id } }
             });
